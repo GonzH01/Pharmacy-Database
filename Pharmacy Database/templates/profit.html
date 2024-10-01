@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profit Report</title>
+</head>
+<body>
+    <h1>Profit Report</h1>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Balance</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for profit in profit %}
+            <tr>
+                <td>{{ profit[0] }}</td>
+                <td>{{ profit[1] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <br><a href="{{ url_for('inventory') }}">Back to Inventory Menu</a>
+</body>
+</html>

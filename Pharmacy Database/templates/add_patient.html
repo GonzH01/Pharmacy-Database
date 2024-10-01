@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add New Patient</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            margin: 20px;
+        }
+
+        label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+
+        input, select {
+            padding: 10px;
+            font-size: 16px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            display: inline-block;
+            font-size: 16px;
+            margin: 10px 2px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+        }
+
+        .button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Add New Patient</h1>
+
+        <!-- Patient input form -->
+        <form method="POST" action="{{ url_for('add_patient') }}">
+            <label for="name">Name: (First, Middle (if applicable), Last)</label>
+            <input type="text" id="name" name="name" required>
+
+            <label for="dob">DOB: (MM-DD-YYYY)</label>
+            <input type="text" id="dob" name="dob" required pattern="\d{2}-\d{2}-\d{4}">
+
+            <label for="address">Address: (Street, City, State, ZIP Code)</label>
+            <input type="text" id="address" name="address" required>
+
+            <label for="phone">Preferred Phone Number: (###-###-####)</label>
+            <input type="text" id="phone" name="phone" required pattern="\d{3}-\d{3}-\d{4}">
+
+            <label for="gender">Gender:</label>
+            <select id="gender" name="gender" required>
+                <option value="M">Male</option>
+                <option value="F">Female</option>
+                <option value="O">Other</option>
+            </select>
+
+            <label for="delivery">Delivery (Y/N):</label>
+            <select id="delivery" name="delivery" required>
+                <option value="Y">Yes</option>
+                <option value="N">No</option>
+            </select>
+
+            <label for="credentials">Credentials: (4-Digit Code)</label>
+            <input type="text" id="credentials" name="credentials" required pattern="\d{4}">
+
+            <br>
+            <button type="submit" class="button">Add Patient</button>
+        </form>
+
+        <!-- Link to go back to the patient management screen -->
+        <br>
+        <a href="{{ url_for('patients') }}">
+            <button type="button" class="button">Cancel</button>
+        </a>
+    </div>
+</body>
+</html>
