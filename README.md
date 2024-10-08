@@ -63,6 +63,3 @@ Contains the HTML files for the frontend interface.
 - Access the web interface at `http://localhost:5000`.
 - Log in with your username and password.
 - Use the navigation menu to manage patients, inventory, and view reports.
-
-## License
-This project is licensed under the MIT License.
