@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Profile</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            margin: 20px;
+        }
+        h1, h2 {
+            font-family: 'Arial', sans-serif;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        .button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            display: inline-block;
+            font-size: 16px;
+            margin: 10px 2px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+        }
+        .button:hover {
+            background-color: #45a049;
+        }
+        .right-button {
+            float: right;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Patient Profile</h1>
+        <h2>Details</h2>
+        <p><strong>Patient ID:</strong> {{ profile[0] }}</p>
+        <p><strong>Name:</strong> {{ profile[1] }} {{ profile[2] }}</p>
+        <p><strong>Date of Birth:</strong> {{ "{:02d}".format(profile[3] % 10000 // 100) }}/{{ "{:02d}".format(profile[3] % 100) }}/{{ profile[3] // 10000 }}</p>
+        <p><strong>Phone Number:</strong> {{ profile[4] }}</p>
+        <p><strong>Address:</strong> {{ profile[5] }}, {{ profile[6] }}, {{ profile[7] }} {{ profile[8] }}</p>
+        <p><strong>Delivery:</strong> {{ profile[9] }}</p>
+        
+        <h2>Medication Report</h2>
+        {% if meds %}
+        <table>
+            <tr>
+                <th>Drug</th>
+                <th>Quantity</th>
+                <th>Days Supply</th>
+                <th>Refills</th>
+                <th>Date Written</th>
+                <th>Date Expired</th>
+                <th>Date Filled</th>
+                <th>NDC Number</th>
+            </tr>
+            {% for med in meds %}
+            <tr>
+                <td>{{ med[1] }}</td>
+                <td>{{ med[2] }}</td>
+                <td>{{ med[3] }}</td>
+                <td>{{ med[4] }}</td>
+                <td>{{ med[5] }}</td>
+                <td>{{ med[6] }}</td>
+                <td>{{ med[7] }}</td>
+                <td>{{ med[8] }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% else %}
+        <p>No medications found.</p>
+        {% endif %}
+
+        <!-- Back to Search -->
+        <a href="{{ url_for('patients') }}">
+            <button class="button">Back to Search</button>
+        </a>
+
+        <!-- Back to Main Menu -->
+        <a href="{{ url_for('main_menu') }}">
+            <button class="button right-button">Back to Main Menu</button>
+        </a>
+    </div>
+</body>
+</html>
