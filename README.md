@@ -1,40 +1,68 @@
-# Pharmacy Database Management System
+# Pharmacy Database System
 
-This is a **Pharmacy Database Management System** built using **Flask** as the web framework and **MySQL** for the database. The system allows users to manage patients, inventory, and employees through a secure, credential-based login system.
+## Overview
+This project is a Flask-based web application designed to manage various aspects of a pharmacy database system, including patient profiles, inventory management, and profit reporting. The system provides functionality for adding, searching, and viewing patient profiles, managing inventory items, and viewing profit reports. It also includes credential-based access control to ensure secure database interactions.
 
 ## Features
+1. **Patient Management**
+    - Add new patient profiles with fields for name, date of birth, address, and phone number.
+    - Search patients by name and DOB or phone number.
+    - View patient profiles and associated medication reports.
 
-- **Credential-Based Login**: Users must log in using their username, password, and a 4-digit one-time credential code generated upon login.
-- **Patient Management**:
-  - Add new patients with required details such as Name, DOB, Address, Phone Number, Gender, and Delivery options.
-  - Auto-login to the database using the 4-digit credentials.
-- **Inventory Management**: Manage pharmacy inventory by adding, viewing, and updating stock.
-- **Employee Management**: Manage employee records with the ability to add, view, and update employee information.
-- **Sign Off Functionality**: Securely sign off from the system, clearing credentials and returning to the login screen.
+2. **Inventory Management**
+    - Add and view inventory items, including item name, price, and quantity.
+    - View profit reports based on the inventory balance.
 
-## Setup Instructions
+3. **User Authentication**
+    - Secure login system using username and password.
+    - 4-digit credential system with 24-hour expiration for database interactions.
 
-1. **Clone the repository**:
-   `git clone https://github.com/yourusername/pharmacy-database.git`
-   `cd pharmacy-database`
+## Project Structure
 
-2. **Install the required dependencies**:
-   Create a virtual environment and install the required packages using the `requirements.txt` (if available) or the following command:
-   `pip install flask mysql-connector-python`
+### `app.py`
+Main application file that defines the routes for login, patient management, inventory management, and authentication.
 
-3. **Set up the MySQL database**:
-   - Ensure you have a MySQL database set up and accessible.
-   - Create the necessary tables by running the provided `connect_to_database.py` and `patient_m.py` scripts.
+### `connect_to_database.py`
+Handles MySQL database connections for user authentication and data management.
 
-4. **Run the application**:
-   Run the Flask application:
-   `python app.py`
+### `scripts/`
+Contains backend logic for managing patients and inventory.
+- **`patient_m.py`**: Handles patient creation, search, and profile retrieval.
+- **`inventory_m.py`**: Manages inventory and profit tables.
 
-5. **Access the application**:
-   Open your browser and navigate to `http://localhost:5000` to use the application.
+### `templates/`
+Contains the HTML files for the frontend interface.
+- **`add_patient.html`**: Form for adding new patient profiles.
+- **`patients.html`**: Manage and search patients.
+- **`inventory.html`**: Manage and view inventory.
+- **`index.html`**: Main menu for navigation.
 
-## Technologies Used
+## Setup and Installation
 
-- **Flask**: Web framework for handling routing, requests, and rendering templates.
-- **MySQL**: Database for managing pharmacy data, including patients, inventory, and employees.
-- **HTML/CSS**: For front-end design and forms.
+1. Clone the repository:
+    ```bash
+    git clone <repository-url>
+    ```
+2. Navigate to the project directory:
+    ```bash
+    cd pharmacy-database
+    ```
+3. Install the required dependencies:
+    ```bash
+    pip install -r requirements.txt
+    ```
+4. Create and configure your MySQL database. Update the connection details in `connect_to_database.py`.
+
+5. Run the Flask application:
+    ```bash
+    python app.py
+    ```
+
+## Usage
+
+- Access the web interface at `http://localhost:5000`.
+- Log in with your username and password.
+- Use the navigation menu to manage patients, inventory, and view reports.
+
+## License
+This project is licensed under the MIT License.
