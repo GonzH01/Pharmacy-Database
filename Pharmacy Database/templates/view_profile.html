@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Profile</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            margin: 20px;
+        }
+        h1, h2 {
+            font-family: 'Arial', sans-serif;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table, th, td {
+            border: 1px solid black;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            display: inline-block;
+            font-size: 16px;
+            margin: 10px 2px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+        }
+        .button:hover {
+            background-color: #45a049;
+        }
+        .right-button {
+            float: right;
+        }
+        .left-button {
+            float: left;
+        }
+        .center-button {
+            display: block;
+            margin: 0 auto;
+        }
+        .pagination-buttons {
+            clear: both;
+            padding: 20px 0;
+        }
+        .allergies {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Patient Profile</h1>
+
+        <!-- Allergies, Age, and Conditions Table -->
+        <table>
+            <tr>
+                <th>Allergies</th>
+                <td class="allergies">{{ profile[11] }}</td> <!-- Display allergies in red -->
+                <th>Age</th>
+                <td>{{ age }}</td> <!-- Display calculated age -->
+                <th>Conditions</th>
+                <td>{{ profile[12] }}</td> <!-- Display conditions in normal color -->
+            </tr>
+        </table>
+
+        <!-- Patient Information Header in a single row table -->
+        <table>
+            <tr>
+                <th>Name</th>
+                <td>{{ profile[3] }} {{ profile[4] }}</td> <!-- first_name + last_name -->
+                <th>Address</th>
+                <td>{{ profile[5] }}, {{ profile[8] }}, {{ profile[9] }} {{ profile[10] }}</td> <!-- street, city, state, zip_code -->
+                <th>Date of Birth</th>
+                <td>
+                    {% if profile[6] %}
+                        {{ "{:02d}".format(profile[6] % 10000 // 100) }}/{{ "{:02d}".format(profile[6] % 100) }}/{{ profile[6] // 10000 }}
+                    {% endif %}
+                </td> <!-- MM/DD/YYYY format -->
+                <th>Delivery Preference</th>
+                <td>{{ profile[2] }}</td> <!-- delivery -->
+                <th>Gender</th>
+                <td>{{ profile[1] }}</td> <!-- gender -->
+                <th>Phone Number</th>
+                <td>
+                    {% if profile[7] %}
+                        ({{ profile[7] // 10000000 }}) {{ "{:03d}".format(profile[7] % 10000000 // 10000) }}-{{ "{:04d}".format(profile[7] % 10000) }}
+                    {% endif %}
+                </td> <!-- (###) ###-#### format -->
+            </tr>
+        </table>
+
+        <!-- Medication List -->
+        <h2>Medication Report</h2>
+        {% if meds %}
+        <table>
+            <tr>
+                <th>Drug</th>
+                <th>Quantity</th>
+                <th>Days Supply</th>
+                <th>Refills</th>
+                <th>Date Written</th>
+                <th>Date Expired</th>
+                <th>Date Filled</th>
+                <th>NDC Number</th>
+            </tr>
+            {% for med in meds %}
+            <tr>
+                <td>{{ med[1] }}</td>
+                <td>{{ med[2] }}</td>
+                <td>{{ med[3] }}</td>
+                <td>{{ med[4] }}</td>
+                <td>{{ med[5] }}</td>
+                <td>{{ med[6] }}</td>
+                <td>{{ med[7] }}</td>
+                <td>{{ med[8] }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% else %}
+        <p>No medications found.</p>
+        {% endif %}
+
+        <!-- Buttons for Pagination and Actions -->
+        <div class="pagination-buttons">
+            <!-- Exit button on the left -->
+            <a href="{{ url_for('patients') }}">
+                <button class="button left-button">Exit</button>
+            </a>
+
+            <!-- Previous button -->
+            <button class="button left-button">Previous</button>
+
+            <!-- Add New Rx button in the center -->
+            <a href="{{ url_for('add_rx') }}">
+                <button class="button center-button">Add New Rx</button>
+            </a>
+
+            <!-- Next button on the right -->
+            <button class="button right-button">Next</button>
+        </div>
+    </div>
+</body>
+</html>

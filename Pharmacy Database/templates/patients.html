@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Patients</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            margin: 20px;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+        input {
+            padding: 10px;
+            font-size: 16px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            display: inline-block;
+            font-size: 16px;
+            margin: 10px 2px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+        }
+        .button:hover {
+            background-color: #45a049;
+        }
+        .right-button {
+            float: right;
+        }
+    </style>
+    <script>
+        function validateForm() {
+            var name = document.getElementById("name").value;
+            var dob = document.getElementById("dob").value;
+            var phone = document.getElementById("phone").value;
+
+            // If the user inputs Name + DOB, ensure Phone is empty
+            if (name && dob && !phone) {
+                return true;
+            }
+            // If the user inputs Phone, ensure Name and DOB are empty
+            if (phone && !name && !dob) {
+                return true;
+            }
+            alert("Please enter either (Name + DOB) or Phone Number.");
+            return false;
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Manage Patients</h1>
+        <form method="POST" action="{{ url_for('search_patient') }}" onsubmit="return validateForm();">
+            <label for="name">Search by Name: (Last, First)</label>
+            <input type="text" id="name" name="name" placeholder="Doe, Jane">
+
+            <label for="dob">Search by DOB: (MMDDYYYY)</label>
+            <input type="text" id="dob" name="dob" maxlength="8" pattern="\d{8}" placeholder="Enter DOB">
+
+            <label for="phone">Or Search by Phone Number (10 digits)</label>
+            <input type="text" id="phone" name="phone" maxlength="10" pattern="\d{10}" placeholder="Phone Number">
+
+            <label for="credentials">Credentials: (4-Digit Code)</label>
+            <input type="text" id="credentials" name="credentials" required pattern="\d{4}" maxlength="4">
+
+            <button type="submit" class="button">Search Patient</button>
+        </form>
+
+        <!-- Add new patient button -->
+        <a href="{{ url_for('add_patient') }}">
+            <button class="button">Add New Patient</button>
+        </a>
+
+        <!-- Cancel Button -->
+        <a href="{{ url_for('main_menu') }}">
+            <button class="button right-button">Back to Main Menu</button>
+        </a>
+    </div>
+</body>
+</html>
