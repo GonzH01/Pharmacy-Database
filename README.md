@@ -1,65 +1,91 @@
-# Pharmacy Database System
+# Pharmacy Database
 
-## Overview
-This project is a Flask-based web application designed to manage various aspects of a pharmacy database system, including patient profiles, inventory management, and profit reporting. The system provides functionality for adding, searching, and viewing patient profiles, managing inventory items, and viewing profit reports. It also includes credential-based access control to ensure secure database interactions.
+## Description
+
+The Pharmacy Database is a web-based application for managing patient profiles, medications, inventory, and prescribers in a pharmacy environment. The system uses Flask as a backend framework, MySQL for database management, and a combination of HTML, CSS, and JavaScript for the frontend.
 
 ## Features
-1. **Patient Management**
-    - Add new patient profiles with fields for name, date of birth, address, and phone number.
-    - Search patients by name and DOB or phone number.
-    - View patient profiles and associated medication reports.
 
-2. **Inventory Management**
-    - Add and view inventory items, including item name, price, and quantity.
-    - View profit reports based on the inventory balance.
+- **Manage Patients**: Add, search, and view patient profiles with details such as name, address, allergies, conditions, and medications.
+- **Manage Inventory**: Add and update inventory for pharmacy products.
+- **Manage Prescribers**: Placeholder page for managing prescribers (coming soon).
+- **Add New Rx**: Add prescriptions to patient profiles (currently displays "Coming Soon").
+- **Secure Access**: Credential-based access with a generated 4-digit code that expires after 24 hours.
+- **Responsive Design**: User-friendly interface with easy navigation between patients, inventory, and prescriber management.
+  
+## Technologies Used
 
-3. **User Authentication**
-    - Secure login system using username and password.
-    - 4-digit credential system with 24-hour expiration for database interactions.
+- **Backend**: Flask (Python)
+- **Database**: MySQL
+- **Frontend**: HTML, CSS, JavaScript
+- **Styling**: Inline CSS for easy customization
+- **Security**: Credentials expire after 24 hours
 
-## Project Structure
+## Setup
 
-### `app.py`
-Main application file that defines the routes for login, patient management, inventory management, and authentication.
+### Requirements
 
-### `connect_to_database.py`
-Handles MySQL database connections for user authentication and data management.
+- Python 3.x
+- MySQL
+- Flask (`pip install flask`)
+- MySQL Connector (`pip install mysql-connector-python`)
 
-### `scripts/`
-Contains backend logic for managing patients and inventory.
-- **`patient_m.py`**: Handles patient creation, search, and profile retrieval.
-- **`inventory_m.py`**: Manages inventory and profit tables.
-
-### `templates/`
-Contains the HTML files for the frontend interface.
-- **`add_patient.html`**: Form for adding new patient profiles.
-- **`patients.html`**: Manage and search patients.
-- **`inventory.html`**: Manage and view inventory.
-- **`index.html`**: Main menu for navigation.
-
-## Setup and Installation
+### Instructions
 
 1. Clone the repository:
-    ```bash
-    git clone <repository-url>
-    ```
-2. Navigate to the project directory:
-    ```bash
-    cd pharmacy-database
-    ```
-3. Install the required dependencies:
-    ```bash
-    pip install -r requirements.txt
-    ```
-4. Create and configure your MySQL database. Update the connection details in `connect_to_database.py`.
 
-5. Run the Flask application:
-    ```bash
-    python app.py
-    ```
+git clone https://github.com/your-repo/pharmacy-database.git
+
+markdown
+
+
+2. Install required Python packages:
+
+pip install -r requirements.txt
+
+markdown
+
+
+3. Set up your MySQL database:
+- Create a new MySQL database.
+- Update the `connect_to_database.py` file with your MySQL credentials.
+
+4. Run the Flask application:
+
+python app.py
+
+markdown
+
+
+5. Access the app on `http://127.0.0.1:5000` in your web browser.
+
+### Database Schema
+
+- **Patients Table**:
+- patient_ID (Primary Key)
+- first_name, last_name
+- dob (date of birth)
+- gender
+- street, city, state, zip_code
+- delivery (Yes/No)
+- phone number
+- allergies, conditions
+
+- **Meds Table**:
+- patient_ID (Foreign Key)
+- drug, quantity, days_supply, refills
+- date_written, date_expired, date_filled
+- ndc_number (National Drug Code)
 
 ## Usage
 
-- Access the web interface at `http://localhost:5000`.
-- Log in with your username and password.
-- Use the navigation menu to manage patients, inventory, and view reports.
+- **Login**: Use your MySQL credentials to log in and generate a 4-digit code.
+- **Main Menu**: Choose between managing patients, inventory, or prescribers.
+- **Patient Management**: Add new patients, view patient profiles, and search for patients by name, DOB, or phone number.
+- **Prescribers and Inventory**: Manage inventory and prescriber information (prescribers are coming soon).
+- **Sign Off**: Log out of the system securely by signing off.
+
+## Coming Soon
+
+- **Manage Prescribers**: Full functionality for managing prescribers.
+- **Add Rx**: Functionality to add and manage prescriptions for patients.
