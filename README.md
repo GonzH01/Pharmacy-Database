@@ -34,16 +34,8 @@ The Pharmacy Database is a web-based application for managing patient profiles, 
 
 1. Clone the repository:
 
-git clone https://github.com/your-repo/pharmacy-database.git
-
-markdown
-
 
 2. Install required Python packages:
-
-pip install -r requirements.txt
-
-markdown
 
 
 3. Set up your MySQL database:
@@ -53,8 +45,6 @@ markdown
 4. Run the Flask application:
 
 python app.py
-
-markdown
 
 
 5. Access the app on `http://127.0.0.1:5000` in your web browser.
