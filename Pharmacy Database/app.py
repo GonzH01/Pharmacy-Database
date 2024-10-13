@@ -137,25 +137,67 @@ def search_patient():
     return render_template('search_results.html', patients=matching_patients)
 
 # View Patient Profile Route
-@app.route('/view_patient/<patient_id>', methods=['POST'])
+@app.route('/view_patient/<patient_id>', methods=['POST', 'GET'])
 def view_patient(patient_id):
-    entered_credentials = request.form['credentials']
+    entered_credentials = request.form.get('credentials', None)
 
     # Verify the credentials before accessing the database
-    user_info = verify_credentials(entered_credentials)
+    if request.method == 'POST' and entered_credentials:
+        user_info = verify_credentials(entered_credentials)
+        if not user_info:
+            flash("Invalid or expired credentials. Please try again.")
+            return redirect(url_for('patients'))
+    else:
+        # For GET requests, we bypass credential verification
+        user_info = credentials_storage.get(list(credentials_storage.keys())[0])  # Grabbing stored credentials
+
     if not user_info:
-        flash("Invalid or expired credentials. Please try again.")
-        return redirect(url_for('patients'))
+        flash("Could not retrieve credentials. Please log in again.")
+        return redirect(url_for('login'))
 
     # Fetch the patient profile and their medication report, along with age
     patient_profile, medication_report, age = get_patient_profile(user_info['username'], user_info['password'], patient_id)
 
     return render_template('view_profile.html', profile=patient_profile, meds=medication_report, age=age)
 
-# Add Rx Route (Displays the "Coming Soon" page)
-@app.route('/add_rx')
-def add_rx():
-    return render_template('add_rx.html')
+# Add Rx Route (Displays the form to add a new prescription)
+@app.route('/add_rx/<patient_id>', methods=['GET', 'POST'])
+def add_rx(patient_id):
+    if request.method == 'POST':
+        # Get form data for the prescription
+        ndc_number = request.form['ndc_number']
+        drug = request.form['drug']
+        quantity = request.form['quantity']
+        days_supply = request.form['days_supply']
+        refills = request.form['refills']
+        date_written = request.form['date_written']
+        date_expired = request.form['date_expired']
+        date_filled = request.form['date_filled']
+        sig = request.form['sig']
+
+        # Verify the credentials before accessing the database
+        entered_credentials = request.form['credentials']
+        user_info = verify_credentials(entered_credentials)
+        if not user_info:
+            flash("Invalid or expired credentials. Please log in again.")
+            return redirect(url_for('patients'))
+
+        # Insert the new prescription into the meds table
+        mydb = connect_to_database(user_info['username'], user_info['password'])
+        mycursor = mydb.cursor()
+
+        sql = """
+            INSERT INTO meds (patient_ID, drug, quantity, days_supply, refills, date_written, date_expired, date_filled, ndc_number, sig)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        values = (patient_id, drug, quantity, days_supply, refills, date_written, date_expired, date_filled, ndc_number, sig)
+        mycursor.execute(sql, values)
+        mydb.commit()
+
+        flash("Prescription added successfully.")
+        return redirect(url_for('view_patient', patient_id=patient_id))
+
+    return render_template('add_rx.html', patient_id=patient_id)
 
 # Route for managing prescribers (coming soon)
 @app.route('/prescribers')

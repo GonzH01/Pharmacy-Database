@@ -108,25 +108,23 @@
         {% if meds %}
         <table>
             <tr>
-                <th>Drug</th>
+                <th>Drug Name</th>
+                <th>Directions</th>
+                <th>Refills</th>
                 <th>Quantity</th>
                 <th>Days Supply</th>
-                <th>Refills</th>
-                <th>Date Written</th>
-                <th>Date Expired</th>
-                <th>Date Filled</th>
-                <th>NDC Number</th>
+                <th>Last Filled</th>
+                <th>Expires On</th>
             </tr>
             {% for med in meds %}
             <tr>
-                <td>{{ med[1] }}</td>
-                <td>{{ med[2] }}</td>
-                <td>{{ med[3] }}</td>
-                <td>{{ med[4] }}</td>
-                <td>{{ med[5] }}</td>
-                <td>{{ med[6] }}</td>
-                <td>{{ med[7] }}</td>
-                <td>{{ med[8] }}</td>
+                <td>{{ med[3] }}</td> <!-- Drug Name -->
+                <td>{{ med[10] }}</td> <!-- Directions (sig) -->
+                <td>{{ med[6] }}</td> <!-- Refills -->
+                <td>{{ med[4] }}</td> <!-- Quantity -->
+                <td>{{ med[5] }}</td> <!-- Days Supply -->
+                <td>{{ med[9] }}</td> <!-- Date Filled -->
+                <td>{{ med[8] }}</td> <!-- Expiration Date -->
             </tr>
             {% endfor %}
         </table>
@@ -145,7 +143,7 @@
             <button class="button left-button">Previous</button>
 
             <!-- Add New Rx button in the center -->
-            <a href="{{ url_for('add_rx') }}">
+            <a href="{{ url_for('add_rx', patient_id=profile[0]) }}">
                 <button class="button center-button">Add New Rx</button>
             </a>
 

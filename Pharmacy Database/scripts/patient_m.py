@@ -52,9 +52,10 @@ def create_patient_profile(username, password, first_name, last_name, dob, gende
     val = (patient_ID, first_name, last_name, dob, gender, street, city, state, zip_code, delivery, phone, allergies, conditions)
     mycursor.execute(sql, val)
 
-    # Create the meds table if it doesn't exist
+    # Create the meds table if it doesn't exist, including the new sig column
     mycursor.execute("""
         CREATE TABLE IF NOT EXISTS meds (
+            id INT AUTO_INCREMENT PRIMARY KEY,
             patient_ID VARCHAR(5),
             drug VARCHAR(255),
             quantity INT,
@@ -64,7 +65,7 @@ def create_patient_profile(username, password, first_name, last_name, dob, gende
             date_expired DATE,
             date_filled DATE,
             ndc_number VARCHAR(11),
-            PRIMARY KEY (patient_ID, drug),
+            sig VARCHAR(150),
             FOREIGN KEY (patient_ID) REFERENCES patients(patient_ID)
         )
     """)
