@@ -35,10 +35,7 @@ def cleanup_expired_credentials():
 # Verify credentials before making any database connection
 def verify_credentials(entered_credentials):
     cleanup_expired_credentials()  # Clean up expired credentials
-    if int(entered_credentials) in credentials_storage:
-        return credentials_storage[int(entered_credentials)]
-    else:
-        return None
+    return credentials_storage.get(int(entered_credentials))
 
 # Login Route
 @app.route('/', methods=['GET', 'POST'])
@@ -54,7 +51,7 @@ def login():
         mydb = connect_to_database(username, password)
         if mydb:  # Successful connection
             credentials_code, expiration_time = generate_credentials(username, password)
-            flash(f"Your credentials are {credentials_code}. Expires in 24 hours: {expiration_time}")
+            flash(f"Your credentials are {credentials_code}. Expires in 24 hours: {expiration_time.strftime('%Y-%m-%d %I:%M:%S %p')}")
             return redirect(url_for('main_menu', credentials_code=credentials_code))  # Redirect to main menu with credentials
         else:
             flash("Incorrect Username/Password")
@@ -137,12 +134,12 @@ def search_patient():
     return render_template('search_results.html', patients=matching_patients)
 
 # View Patient Profile Route
-@app.route('/view_patient/<patient_id>', methods=['POST', 'GET'])
+@app.route('/view_patient/<patient_id>', methods=['GET', 'POST'])
 def view_patient(patient_id):
-    entered_credentials = request.form.get('credentials', None)
+    if request.method == 'POST':
+        entered_credentials = request.form['credentials']
 
-    # Verify the credentials before accessing the database
-    if request.method == 'POST' and entered_credentials:
+        # Verify the credentials before accessing the database
         user_info = verify_credentials(entered_credentials)
         if not user_info:
             flash("Invalid or expired credentials. Please try again.")
@@ -158,7 +155,8 @@ def view_patient(patient_id):
     # Fetch the patient profile and their medication report, along with age
     patient_profile, medication_report, age = get_patient_profile(user_info['username'], user_info['password'], patient_id)
 
-    return render_template('view_profile.html', profile=patient_profile, meds=medication_report, age=age)
+    # Pass `enumerate` into the template context
+    return render_template('view_profile.html', profile=patient_profile, meds=medication_report, age=age, enumerate=enumerate)
 
 # Add Rx Route (Displays the form to add a new prescription)
 @app.route('/add_rx/<patient_id>', methods=['GET', 'POST'])
@@ -173,7 +171,7 @@ def add_rx(patient_id):
         date_written = request.form['date_written']
         date_expired = request.form['date_expired']
         date_filled = request.form['date_filled']
-        sig = request.form['sig']
+        sig = request.form['sig']  # Directions
 
         # Verify the credentials before accessing the database
         entered_credentials = request.form['credentials']

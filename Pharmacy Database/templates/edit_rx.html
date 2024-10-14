@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Prescription</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            margin: 20px;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+        input {
+            padding: 10px;
+            font-size: 16px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            display: inline-block;
+            font-size: 16px;
+            margin: 10px 2px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+        }
+        .button:hover {
+            background-color: #45a049;
+        }
+        .right-button {
+            float: right;
+        }
+        /* Grey out the NDC input field */
+        input[readonly] {
+            background-color: #e9ecef;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Edit Prescription</h1>
+        <form method="POST" action="{{ url_for('edit_rx', id=id, patient_id=patient_id) }}">
+            <label for="ndc_number">NDC Number: (11 digits)</label>
+            <input type="text" id="ndc_number" name="ndc_number" maxlength="11" required value="{{ med[1] }}" readonly>
+
+            <label for="drug">Drug Name:</label>
+            <input type="text" id="drug" name="drug" maxlength="255" required value="{{ med[3] }}">
+
+            <label for="quantity">Quantity:</label>
+            <input type="text" id="quantity" name="quantity" maxlength="6" pattern="\d{1,6}" required value="{{ med[4] }}">
+
+            <label for="days_supply">Days Supply:</label>
+            <input type="text" id="days_supply" name="days_supply" maxlength="6" pattern="\d{1,6}" required value="{{ med[5] }}">
+
+            <label for="refills">Refills:</label>
+            <input type="text" id="refills" name="refills" maxlength="3" pattern="\d{1,3}" required value="{{ med[6] }}">
+
+            <label for="date_written">Date Written: (YYYY-MM-DD)</label>
+            <input type="date" id="date_written" name="date_written" required value="{{ med[7] }}">
+
+            <label for="date_expired">Date Expired: (YYYY-MM-DD)</label>
+            <input type="date" id="date_expired" name="date_expired" required value="{{ med[8] }}">
+
+            <label for="date_filled">Date Filled: (YYYY-MM-DD)</label>
+            <input type="date" id="date_filled" name="date_filled" required value="{{ med[9] }}">
+
+            <label for="sig">Directions (150 characters max):</label>
+            <input type="text" id="sig" name="sig" maxlength="150" required value="{{ med[10] }}">
+
+            <label for="credentials">Credentials: (4-Digit Code)</label>
+            <input type="text" id="credentials" name="credentials" maxlength="4" pattern="\d{4}" required>
+
+            <button type="submit" class="button">Update Prescription</button>
+        </form>
+
+        <!-- Cancel Button -->
+        <a href="{{ url_for('view_patient', patient_id=patient_id) }}">
+            <button class="button right-button">Cancel</button>
+        </a>
+    </div>
+</body>
+</html>
