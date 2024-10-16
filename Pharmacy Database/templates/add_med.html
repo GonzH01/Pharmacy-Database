@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add New Medication</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        form {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            background-color: #f9f9f9;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .flash-messages {
+            color: red;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Add New Medication</h1>
+
+    <!-- Flash message for feedback -->
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="flash-messages">
+                <ul>
+                    {% for message in messages %}
+                        <li>{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('add_med') }}">
+        <label for="ndc">NDC Number (11 digits):</label>
+        <input type="text" id="ndc" name="ndc" maxlength="11" pattern="\d{11}" required>
+
+        <label for="drug_name">Drug Name:</label>
+        <input type="text" id="drug_name" name="drug_name" required>
+
+        <label for="expiration_date">Expiration Date:</label>
+        <input type="date" id="expiration_date" name="expiration_date" required>
+
+        <label for="lot_number">Lot Number:</label>
+        <input type="text" id="lot_number" name="lot_number" required>
+
+        <label for="unit_price">Unit Price:</label>
+        <input type="text" id="unit_price" name="unit_price" pattern="\d+(\.\d{2})?" required>
+
+        <label for="quantity">Quantity:</label>
+        <input type="text" id="quantity" name="quantity" pattern="\d+" required>
+
+        <label for="manufacturer_name">Manufacturer Name:</label>
+        <input type="text" id="manufacturer_name" name="manufacturer_name" required>
+
+        <label for="phone_number">Manufacturer Phone Number:</label>
+        <input type="text" id="phone_number" name="phone_number" pattern="\d{10}" placeholder="Enter 10-digit phone number" required>
+
+        <label for="email">Manufacturer Email:</label>
+        <input type="email" id="email" name="email" required>
+
+        <label for="fax">Fax (Optional):</label>
+        <input type="text" id="fax" name="fax">
+
+        <label for="credentials">Enter 4-Digit Credentials:</label>
+        <input type="text" id="credentials" name="credentials" maxlength="4" pattern="\d{4}" required>
+
+        <button type="submit">Add New Medication</button>
+    </form>
+</body>
+</html>

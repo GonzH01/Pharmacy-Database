@@ -1,26 +1,43 @@
 from connect_to_database import connect_to_database
 
-def create_tables_and_input_data(id_num, item, unit_price, quantity):
-    """Create inventory and profit tables and insert inventory data"""
-    mydb = connect_to_database()
+def create_tables_and_input_data(id_num, ndc_number, item, expiration_date, lot_number, unit_price, quantity, 
+                                 manufacturer_name, phone_number, email, fax, username, password):
+    """Create inventory table and insert medication data"""
+    mydb = connect_to_database(username, password)
     if not mydb:
         return "Error connecting to the database."
     
     cursor = mydb.cursor()
-    cursor.execute("CREATE TABLE IF NOT EXISTS inventory (id INT(8) PRIMARY KEY, item VARCHAR(255), unit_price FLOAT, quantity FLOAT)")
-    cursor.execute("CREATE TABLE IF NOT EXISTS profit (id INT(8), balance FLOAT, FOREIGN KEY (id) REFERENCES inventory(id))")
 
-    cursor.execute("INSERT INTO inventory (id, item, unit_price, quantity) VALUES (%s, %s, %s, %s)", (id_num, item, unit_price, quantity))
-    balance = unit_price * quantity
-    cursor.execute("INSERT INTO profit (id, balance) VALUES (%s, %s)", (id_num, balance))
+    # Create the inventory table if it doesn't exist
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS inventory (
+        id INT PRIMARY KEY,
+        ndc_number VARCHAR(11),
+        item VARCHAR(255),
+        expiration_date DATE,
+        lot_number VARCHAR(50),
+        unit_price DECIMAL(10, 2),
+        quantity INT,
+        manufacturer_name VARCHAR(255),
+        phone_number BIGINT(10),
+        email VARCHAR(255),
+        fax BIGINT(10)
+    )
+    """)
+
+    # Insert the new medication into the inventory table
+    cursor.execute("""
+    INSERT INTO inventory (id, ndc_number, item, expiration_date, lot_number, unit_price, quantity, manufacturer_name, phone_number, email, fax)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    """, (id_num, ndc_number, item, expiration_date, lot_number, unit_price, quantity, manufacturer_name, phone_number, email, fax))
 
     mydb.commit()
-    return f"Inventory {item} added successfully."
+    return f"Medication {item} added successfully."
 
-
-def view_inventory_table():
+def view_inventory_table(username, password):
     """View the inventory table"""
-    mydb = connect_to_database()
+    mydb = connect_to_database(username, password)
     if not mydb:
         return "Error connecting to the database."
     
@@ -30,10 +47,9 @@ def view_inventory_table():
     
     return rows
 
-
-def view_profit_table():
+def view_profit_table(username, password):
     """View the profit table"""
-    mydb = connect_to_database()
+    mydb = connect_to_database(username, password)
     if not mydb:
         return "Error connecting to the database."
     

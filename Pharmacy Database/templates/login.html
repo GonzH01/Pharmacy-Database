@@ -7,54 +7,58 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-        }
-        .container {
-            margin: 50px auto;
-            width: 300px;
-            text-align: center;
-        }
-        h1 {
-            font-size: 24px;
-            margin-bottom: 20px;
+            margin: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
         }
         form {
-            display: flex;
-            flex-direction: column;
+            max-width: 400px;
+            width: 100%;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            background-color: #ffffff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
         label {
-            margin-top: 10px;
-            text-align: left;
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
         }
         input {
-            padding: 10px;
-            margin-top: 5px;
-            font-size: 16px;
             width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
             box-sizing: border-box;
         }
-        .button {
+        button {
+            width: 100%;
+            padding: 10px;
             background-color: #4CAF50;
             color: white;
-            padding: 10px 20px;
-            text-align: center;
-            margin-top: 20px;
-            cursor: pointer;
             border: none;
             border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
         }
-        .button:hover {
+        button:hover {
             background-color: #45a049;
         }
         .flash-messages {
             color: red;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Login to Pharmacy Database</h1>
-
+    <form method="POST" action="{{ url_for('login') }}">
+        <h1 style="text-align: center;">Login to Pharmacy Database</h1>
+        
         <!-- Flash message for feedback -->
         {% with messages = get_flashed_messages() %}
             {% if messages %}
@@ -68,15 +72,13 @@
             {% endif %}
         {% endwith %}
 
-        <form method="POST" action="{{ url_for('login') }}">
-            <label for="username">Username:</label>
-            <input type="text" id="username" name="username" required>
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" placeholder="Enter your username" required>
 
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password" required>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" placeholder="Enter your password" required>
 
-            <button type="submit" class="button">Login</button>
-        </form>
-    </div>
+        <button type="submit">Login</button>
+    </form>
 </body>
 </html>

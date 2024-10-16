@@ -64,8 +64,8 @@
 
         <!-- Buttons for actions (Add/View inventory) -->
         <div>
-            <button class="button">Add New Item</button>
-            <button class="button">View Inventory</button>
+            <a href="{{ url_for('add_med') }}"><button class="button">Add New Med</button></a>
+            <a href="{{ url_for('view_inventory') }}"><button class="button">View Inventory</button></a>
         </div>
 
         <!-- Link to go back to the main menu -->
