@@ -1,81 +1,121 @@
-# Pharmacy Database
+# Pharmacy Database Management System
 
-## Description
-
-The Pharmacy Database is a web-based application for managing patient profiles, medications, inventory, and prescribers in a pharmacy environment. The system uses Flask as a backend framework, MySQL for database management, and a combination of HTML, CSS, and JavaScript for the frontend.
+This is a Pharmacy Database Management System built with Flask and MySQL, designed to manage patient profiles, inventory (medications), and prescribers. It supports creating, editing, viewing, and managing both patient and medication records.
 
 ## Features
 
-- **Manage Patients**: Add, search, and view patient profiles with details such as name, address, allergies, conditions, and medications.
-- **Manage Inventory**: Add and update inventory for pharmacy products.
-- **Manage Prescribers**: Placeholder page for managing prescribers (coming soon).
-- **Add New Rx**: Add prescriptions to patient profiles (currently displays "Coming Soon").
-- **Secure Access**: Credential-based access with a generated 4-digit code that expires after 24 hours.
-- **Responsive Design**: User-friendly interface with easy navigation between patients, inventory, and prescriber management.
-  
-## Technologies Used
+- **User Authentication**: Username and password-based login.
+- **Patient Management**: Add, search, view, and manage patient profiles.
+- **Inventory Management**: Add, view, and manage medications in the pharmacy's inventory.
+- **Prescription Management**: Add and edit prescriptions for patients.
+- **Session-based Credentials**: Generated credentials for database access, which expire after 24 hours.
 
-- **Backend**: Flask (Python)
-- **Database**: MySQL
-- **Frontend**: HTML, CSS, JavaScript
-- **Styling**: Inline CSS for easy customization
-- **Security**: Credentials expire after 24 hours
+## Installation
 
-## Setup
+### Prerequisites
 
-### Requirements
+Make sure you have the following installed on your system:
 
-- Python 3.x
-- MySQL
-- Flask (`pip install flask`)
-- MySQL Connector (`pip install mysql-connector-python`)
+- [Python 3.7+](https://www.python.org/downloads/)
+- [MySQL](https://www.mysql.com/downloads/)
+- [Flask](https://flask.palletsprojects.com/en/latest/)
 
-### Instructions
+### Steps to Install
 
-1. Clone the repository:
+1. **Clone the Repository:**
 
+   ```bash
+   git clone https://github.com/your-username/pharmacy-database.git
+   cd pharmacy-database
 
-2. Install required Python packages:
+    Create and activate a Python virtual environment (optional but recommended):
 
+    bash
 
-3. Set up your MySQL database:
-- Create a new MySQL database.
-- Update the `connect_to_database.py` file with your MySQL credentials.
+python -m venv pharmacy_env
+source pharmacy_env/bin/activate  # On Windows use `pharmacy_env\Scripts\activate`
 
-4. Run the Flask application:
+Install Dependencies:
 
-python app.py
+Install the necessary Python packages listed in the requirements.txt file:
 
+bash
 
-5. Access the app on `http://127.0.0.1:5000` in your web browser.
+pip install -r requirements.txt
 
-### Database Schema
+Database Setup:
 
-- **Patients Table**:
-- patient_ID (Primary Key)
-- first_name, last_name
-- dob (date of birth)
-- gender
-- street, city, state, zip_code
-- delivery (Yes/No)
-- phone number
-- allergies, conditions
+    Create a MySQL database named pharmacy_db.
+    Update your MySQL connection details in the connect_to_database.py file.
 
-- **Meds Table**:
-- patient_ID (Foreign Key)
-- drug, quantity, days_supply, refills
-- date_written, date_expired, date_filled
-- ndc_number (National Drug Code)
+Example:
 
-## Usage
+python
 
-- **Login**: Use your MySQL credentials to log in and generate a 4-digit code.
-- **Main Menu**: Choose between managing patients, inventory, or prescribers.
-- **Patient Management**: Add new patients, view patient profiles, and search for patients by name, DOB, or phone number.
-- **Prescribers and Inventory**: Manage inventory and prescriber information (prescribers are coming soon).
-- **Sign Off**: Log out of the system securely by signing off.
+def connect_to_database(username, password):
+    mydb = mysql.connector.connect(
+        host="localhost",
+        user=username,
+        password=password,
+        database="pharmacy_db"
+    )
+    return mydb
 
-## Coming Soon
+Run the Application:
 
-- **Manage Prescribers**: Full functionality for managing prescribers.
-- **Add Rx**: Functionality to add and manage prescriptions for patients.
+Once everything is set up, run the Flask application:
+
+bash
+
+    python app.py
+
+    Access the Application:
+
+    Open your browser and go to http://127.0.0.1:5000/ to access the application.
+
+Project Structure
+
+bash
+
+pharmacy-database/
+│
+├── app.py                    # Main Flask application
+├── connect_to_database.py     # Database connection logic
+├── requirements.txt           # Python dependencies
+├── templates/                 # HTML templates for the app (login.html, index.html, etc.)
+│   ├── login.html
+│   ├── index.html
+│   ├── add_patient.html
+│   ├── view_profile.html
+│   ├── add_med.html
+│   └── inventory.html
+├── static/                    # Static files (CSS, JS)
+├── scripts/                   # Python modules for database logic
+│   ├── patient_m.py           # Logic for patient management
+│   └── inventory_m.py         # Logic for inventory management
+└── README.md                  # Project readme file
+
+Usage
+Adding a Patient
+
+    Log in using your credentials.
+    Navigate to "Manage Patients."
+    Click "Add New Patient" and fill in the required information.
+    Submit the form to add the patient to the database.
+
+Managing Inventory
+
+    Navigate to "Manage Inventory."
+    Click "Add New Item" to add a new medication to the inventory.
+    Fill in the required details such as NDC number, drug name, lot number, expiration date, etc.
+    Submit to add the item to the database.
+
+Editing Prescriptions
+
+    Navigate to a patient's profile from the "Manage Patients" section.
+    Click "Edit Rx" next to the prescription you want to edit.
+    Update the fields as needed and submit to save changes.
+
+Contributing
+
+Feel free to fork this project, submit issues, or contribute by submitting pull requests. Contributions are always welcome!
