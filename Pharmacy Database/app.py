@@ -160,7 +160,7 @@ def view_patient(patient_id):
     # Fetch the patient profile and their medication report, along with age
     patient_profile, medication_report, age = get_patient_profile(user_info['username'], user_info['password'], patient_id)
 
-    # Pass `enumerate` into the template context
+    # Pass enumerate into the template context
     return render_template('view_profile.html', profile=patient_profile, meds=medication_report, age=age, enumerate=enumerate)
 
 # Add Rx Route (Displays the form to add a new prescription)
@@ -258,16 +258,23 @@ def edit_rx(id, patient_id):
 def add_med():
     if request.method == 'POST':
         # Get form data for the medication
-        ndc = request.form['ndc']
         drug_name = request.form['drug_name']
+        ndc = request.form['ndc']
+        dosage_form = request.form['dosage_form']
+        strength = request.form['strength']
+        quantity = request.form['quantity']
+        quantity_per_unit = request.form['quantity_per_unit']
         expiration_date = request.form['expiration_date']
         lot_number = request.form['lot_number']
-        unit_price = request.form['unit_price']
-        quantity = request.form['quantity']
         manufacturer_name = request.form['manufacturer_name']
+        unit_price = request.form['unit_price']
         phone_number = request.form['phone_number']
         email = request.form['email']
         fax = request.form.get('fax', None)
+        description = request.form.get('description', None)
+        storage_requirements = request.form.get('storage_requirements', None)
+        controlled_substance_status = request.form['controlled_substance_status']
+        allergies_warnings = request.form.get('allergies_warnings', None)
         credentials = request.form['credentials']
 
         # Verify credentials
@@ -278,8 +285,10 @@ def add_med():
 
         # Insert the new medication into the inventory
         result = create_tables_and_input_data(
-            random.randint(10000, 99999), ndc, drug_name, expiration_date, lot_number, unit_price, quantity,
-            manufacturer_name, phone_number, email, fax, user_info['username'], user_info['password']
+            ndc, drug_name, dosage_form, strength, quantity, quantity_per_unit,
+            expiration_date, lot_number, manufacturer_name, unit_price, phone_number, email, fax,
+            description, storage_requirements, controlled_substance_status, allergies_warnings,
+            user_info['username'], user_info['password']
         )
         flash(result)
         return redirect(url_for('inventory'))

@@ -25,7 +25,7 @@
             font-weight: bold;
         }
 
-        input {
+        input, select, textarea {
             width: 100%;
             padding: 10px;
             margin-bottom: 20px;
@@ -71,35 +71,65 @@
     {% endwith %}
 
     <form method="POST" action="{{ url_for('add_med') }}">
+        <label for="drug_name">Drug Name (max 255 chars):</label>
+        <input type="text" id="drug_name" name="drug_name" maxlength="255" required>
+
         <label for="ndc">NDC Number (11 digits):</label>
         <input type="text" id="ndc" name="ndc" maxlength="11" pattern="\d{11}" required>
 
-        <label for="drug_name">Drug Name:</label>
-        <input type="text" id="drug_name" name="drug_name" required>
+        <label for="dosage_form">Dosage Form:</label>
+        <select id="dosage_form" name="dosage_form" required>
+            <option value="">Select Form</option>
+            <option value="tablet/capsule">Tablet/Capsule</option>
+            <option value="liquid">Liquid (ml)</option>
+            <option value="each">Each (e.g., packet)</option>
+        </select>
+
+        <label for="strength">Strength (e.g., 500 mg):</label>
+        <input type="text" id="strength" name="strength" maxlength="50" required>
+
+        <label for="quantity">Quantity (e.g., 30 bottles):</label>
+        <input type="text" id="quantity" name="quantity" pattern="\d+" required>
+
+        <label for="quantity_per_unit">Quantity Per Unit (e.g., 30 tablets per bottle):</label>
+        <input type="text" id="quantity_per_unit" name="quantity_per_unit" maxlength="50" required>
 
         <label for="expiration_date">Expiration Date:</label>
         <input type="date" id="expiration_date" name="expiration_date" required>
 
-        <label for="lot_number">Lot Number:</label>
-        <input type="text" id="lot_number" name="lot_number" required>
+        <label for="lot_number">Lot Number (max 50 chars):</label>
+        <input type="text" id="lot_number" name="lot_number" maxlength="50" required>
 
-        <label for="unit_price">Unit Price:</label>
+        <label for="manufacturer_name">Manufacturer Name (max 255 chars):</label>
+        <input type="text" id="manufacturer_name" name="manufacturer_name" maxlength="255" required>
+
+        <label for="unit_price">Unit Price (e.g., 10.99):</label>
         <input type="text" id="unit_price" name="unit_price" pattern="\d+(\.\d{2})?" required>
 
-        <label for="quantity">Quantity:</label>
-        <input type="text" id="quantity" name="quantity" pattern="\d+" required>
-
-        <label for="manufacturer_name">Manufacturer Name:</label>
-        <input type="text" id="manufacturer_name" name="manufacturer_name" required>
-
-        <label for="phone_number">Manufacturer Phone Number:</label>
-        <input type="text" id="phone_number" name="phone_number" pattern="\d{10}" placeholder="Enter 10-digit phone number" required>
+        <label for="phone_number">Manufacturer Phone Number (10 digits):</label>
+        <input type="text" id="phone_number" name="phone_number" maxlength="10" pattern="\d{10}" required>
 
         <label for="email">Manufacturer Email:</label>
-        <input type="email" id="email" name="email" required>
+        <input type="email" id="email" name="email" maxlength="255" required>
 
-        <label for="fax">Fax (Optional):</label>
-        <input type="text" id="fax" name="fax">
+        <label for="fax">Fax Number (Optional, 10 digits):</label>
+        <input type="text" id="fax" name="fax" maxlength="10" pattern="\d{10}">
+
+        <label for="description">Description (Optional, max 255 chars):</label>
+        <textarea id="description" name="description" maxlength="255"></textarea>
+
+        <label for="storage_requirements">Storage Requirements (Optional, max 255 chars):</label>
+        <textarea id="storage_requirements" name="storage_requirements" maxlength="255"></textarea>
+
+        <label for="controlled_substance_status">Controlled Substance (y/n):</label>
+        <select id="controlled_substance_status" name="controlled_substance_status" required>
+            <option value="">Select</option>
+            <option value="y">Yes</option>
+            <option value="n">No</option>
+        </select>
+
+        <label for="allergies_warnings">Allergies/Warnings (Optional, max 255 chars):</label>
+        <textarea id="allergies_warnings" name="allergies_warnings" maxlength="255"></textarea>
 
         <label for="credentials">Enter 4-Digit Credentials:</label>
         <input type="text" id="credentials" name="credentials" maxlength="4" pattern="\d{4}" required>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Inventory</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .filter-section {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .filter-section label {
+            margin-right: 10px;
+            font-weight: bold;
+        }
+
+        .filter-section input {
+            margin-right: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 10px;
+            border: 1px solid #ccc;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        .filter-button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        .filter-button:hover {
+            background-color: #45a049;
+        }
+
+        .flash-messages {
+            color: red;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>View Inventory</h1>
+
+    <!-- Flash message for feedback -->
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="flash-messages">
+                <ul>
+                    {% for message in messages %}
+                        <li>{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Filter Section -->
+    <div class="filter-section">
+        <form method="GET" action="{{ url_for('view_inventory') }}">
+            <label><input type="radio" name="filter" value="quantity_high_to_low"> Quantity (High to Low)</label>
+            <label><input type="radio" name="filter" value="quantity_low_to_high"> Quantity (Low to High)</label>
+            <label><input type="radio" name="filter" value="price_high_to_low"> Price (High to Low)</label>
+            <label><input type="radio" name="filter" value="price_low_to_high"> Price (Low to High)</label>
+            <label><input type="radio" name="filter" value="expiration_soon"> Expiration Soon</label>
+            <label><input type="radio" name="filter" value="controls_only"> Controlled Substances Only</label>
+            <label><input type="radio" name="filter" value="non_controls_only"> Non-Controlled Substances Only</label>
+            <br>
+            <input type="text" name="credentials" maxlength="4" pattern="\d{4}" placeholder="Enter 4-Digit Credentials" required>
+            <br>
+            <button type="submit" class="filter-button">Apply Filters</button>
+        </form>
+    </div>
+
+    <!-- Inventory Table -->
+    <table>
+        <thead>
+            <tr>
+                <th>Drug Name</th>
+                <th>Expiration Date</th>
+                <th>Quantity</th>
+                <th>Cost</th>
+                <th>Controlled Status</th>
+                <th>Storage Requirements</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for med in inventory %}
+            <tr>
+                <td>{{ med[0] }}</td>
+                <td>{{ med[1] }}</td>
+                <td>{{ med[2] }}</td>
+                <td>{{ med[3] }}</td>
+                <td>{{ med[4] }}</td>
+                <td>{{ med[5] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
