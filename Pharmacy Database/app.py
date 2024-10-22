@@ -1,6 +1,6 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, jsonify, url_for, flash
 from scripts.patient_m import create_patient_profile, search_patients, get_patient_profile
-from scripts.inventory_m import create_tables_and_input_data, view_inventory_table, view_profit_table
+from scripts.inventory_m import create_tables_and_input_data, view_inventory_table, update_balance, get_drug_by_ndc, check_ndc_in_inventory 
 from connect_to_database import connect_to_database
 import random
 from datetime import datetime, timedelta
@@ -208,7 +208,7 @@ def edit_rx(id, patient_id):
     if request.method == 'POST':
         # Get updated form data for the prescription
         drug = request.form['drug']
-        quantity = request.form['quantity']
+        quantity = int(request.form['quantity'])
         days_supply = request.form['days_supply']
         refills = request.form['refills']
         date_written = request.form['date_written']
@@ -235,8 +235,18 @@ def edit_rx(id, patient_id):
         mycursor.execute(sql, values)
         mydb.commit()
 
+        # Update the balance (if the edited prescription affects balance on hand)
+        update_result = update_balance(
+            ndc=drug,  # Assuming NDC is linked to the drug
+            new_balance_on_hand=quantity,
+            username=user_info['username'],
+            password=user_info['password']
+        )
+        flash(update_result)
+
         flash("Prescription updated successfully.")
         return redirect(url_for('view_patient', patient_id=patient_id))
+
 
     # Fetch the medication details for editing
     user_info = credentials_storage.get(list(credentials_storage.keys())[0])  # Grabbing stored credentials
@@ -250,50 +260,106 @@ def edit_rx(id, patient_id):
     # Fetch the current details of the medication
     mycursor.execute("SELECT * FROM meds WHERE id = %s AND patient_ID = %s", (id, patient_id))
     med = mycursor.fetchone()
-
     return render_template('edit_rx.html', med=med, id=id, patient_id=patient_id)
 
-# Add New Medication Route (for inventory management)
+def get_drug_by_ndc(ndc, username=None, password=None):
+    mydb = connect_to_database(username, password)
+    if not mydb:
+        return None
+
+    cursor = mydb.cursor(dictionary=True)
+    cursor.execute("""
+    SELECT drug_name, strength, dosage_form, manufacturer_name, unit_price, phone_number, email, fax, description, 
+           storage_requirements, controlled_substance_status, (quantity * quantity_per_unit) AS balance_on_hand
+    FROM inventory WHERE ndc_number = %s
+    """, (ndc,))
+    result = cursor.fetchone()
+
+    return result
+
+
+@app.route('/check_ndc', methods=['GET'])
+def check_ndc():
+    ndc = request.args.get('ndc')
+    credentials = request.args.get('credentials')
+
+    if not ndc or not credentials:
+        return jsonify({'error': 'Invalid NDC or credentials.'}), 400
+
+    # Retrieve user credentials
+    user_info = verify_credentials(credentials)
+    if not user_info:
+        return jsonify({'error': 'Invalid or expired credentials.'}), 400
+
+    username = user_info['username']
+    password = user_info['password']
+
+    # Call the function to check NDC in the database
+    drug_details = check_ndc_in_inventory(ndc, username, password)
+
+    if drug_details:
+        return jsonify({
+            'exists': True,
+            'drug_name': drug_details.get('drug_name', ''),
+            'strength': drug_details.get('strength', ''),
+            'dosage_form': drug_details.get('dosage_form', ''),
+            'manufacturer_name': drug_details.get('manufacturer_name', ''),
+            'unit_price': str(drug_details.get('unit_price', '')),
+            'phone_number': str(drug_details.get('phone_number', '')),
+            'email': drug_details.get('email', ''),
+            'fax': str(drug_details.get('fax', '')),
+            'description': drug_details.get('description', ''),
+            'storage_requirements': drug_details.get('storage_requirements', ''),
+            'controlled_substance_status': drug_details.get('controlled_substance_status', '')
+        })
+    else:
+        return jsonify({'exists': False})
+
+
 @app.route('/add_med', methods=['GET', 'POST'])
 def add_med():
     if request.method == 'POST':
-        # Get form data for the medication
-        drug_name = request.form['drug_name']
         ndc = request.form['ndc']
-        dosage_form = request.form['dosage_form']
-        strength = request.form['strength']
-        quantity = request.form['quantity']
-        quantity_per_unit = request.form['quantity_per_unit']
-        expiration_date = request.form['expiration_date']
-        lot_number = request.form['lot_number']
-        manufacturer_name = request.form['manufacturer_name']
-        unit_price = request.form['unit_price']
-        phone_number = request.form['phone_number']
-        email = request.form['email']
-        fax = request.form.get('fax', None)
-        description = request.form.get('description', None)
-        storage_requirements = request.form.get('storage_requirements', None)
-        controlled_substance_status = request.form['controlled_substance_status']
-        allergies_warnings = request.form.get('allergies_warnings', None)
-        credentials = request.form['credentials']
 
-        # Verify credentials
-        user_info = verify_credentials(credentials)
-        if not user_info:
-            flash("Invalid or expired credentials. Please log in again.")
+        # Check if the NDC exists in the database
+        username = request.form.get('username')
+        password = request.form.get('password')
+        existing_drug = check_ndc_in_inventory(ndc, username, password)
+
+        if existing_drug:
+            # Autofill additional fields
+            drug_name = existing_drug['drug_name']
+            strength = existing_drug['strength']
+            dosage_form = existing_drug['dosage_form']
+            manufacturer_name = existing_drug['manufacturer_name']
+            unit_price = float(existing_drug['unit_price'])
+
+            # Update balance calculations based on quantity inputs
+            quantity = int(request.form['quantity'])
+            quantity_per_unit = int(request.form['quantity_per_unit'])
+            new_balance_on_hand = existing_drug['balance_on_hand'] + (quantity * quantity_per_unit)
+            new_inventory_value = new_balance_on_hand * unit_price
+
+            update_balance(ndc, new_balance_on_hand, new_inventory_value, username, password)
+
+            flash(f"{drug_name} (NDC: {ndc}) updated successfully.")
             return redirect(url_for('inventory'))
 
-        # Insert the new medication into the inventory
+        # Insert new medication details
         result = create_tables_and_input_data(
-            ndc, drug_name, dosage_form, strength, quantity, quantity_per_unit,
-            expiration_date, lot_number, manufacturer_name, unit_price, phone_number, email, fax,
-            description, storage_requirements, controlled_substance_status, allergies_warnings,
-            user_info['username'], user_info['password']
+            ndc, request.form['drug_name'], request.form['dosage_form'], request.form['strength'],
+            int(request.form['quantity']), int(request.form['quantity_per_unit']), request.form['expiration_date'],
+            request.form['lot_number'], request.form['manufacturer_name'], float(request.form['unit_price']),
+            request.form['phone_number'], request.form['email'], request.form['fax'], request.form['description'],
+            request.form['storage_requirements'], request.form['controlled_substance_status'], request.form['allergies_warnings'],
+            username, password
         )
+
         flash(result)
         return redirect(url_for('inventory'))
 
     return render_template('add_med.html')
+
 
 
 
@@ -307,11 +373,29 @@ def inventory():
     # Render the inventory management page
     return render_template('inventory.html')
 
-# View Inventory Table Route
-@app.route('/view_inventory')
+# Route to view inventory
+@app.route('/view_inventory', methods=['GET', 'POST'])
 def view_inventory():
-    inventory_data = view_inventory_table()
-    return render_template('view_inventory.html', inventory=inventory_data)
+    if request.method == 'POST':
+        # Get credentials from form
+        entered_credentials = request.form.get('credentials')
+
+        # Verify credentials before accessing the database
+        user_info = verify_credentials(entered_credentials)
+        if not user_info:
+            flash("Invalid or expired credentials. Please try again.")
+            return redirect(url_for('inventory'))
+
+        # Fetch inventory data
+        inventory_data = view_inventory_table(user_info['username'], user_info['password'])
+
+        # Render the template with fetched data
+        return render_template('view_inventory.html', inventory=inventory_data)
+
+    # If GET request, just show the empty form
+    return render_template('view_inventory.html', inventory=[])
+
+
 
 # View Profit Table Route
 @app.route('/view_profit')

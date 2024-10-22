@@ -12,6 +12,7 @@
 
         h1 {
             text-align: center;
+            margin-bottom: 20px;
         }
 
         .filter-section {
@@ -44,24 +45,47 @@
             background-color: #f2f2f2;
         }
 
+        .flash-messages {
+            color: red;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .button {
+            width: 48%;
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            border: none;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .cancel-button {
+            background-color: #f44336;
+            color: white;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .cancel-button:hover {
+            background-color: #d32f2f;
+        }
+
         .filter-button {
-            padding: 10px 20px;
             background-color: #4CAF50;
             color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 20px;
         }
 
         .filter-button:hover {
             background-color: #45a049;
         }
 
-        .flash-messages {
-            color: red;
-            margin-bottom: 20px;
-            text-align: center;
+        .button-group {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
         }
     </style>
 </head>
@@ -81,47 +105,35 @@
         {% endif %}
     {% endwith %}
 
-    <!-- Filter Section -->
-    <div class="filter-section">
-        <form method="GET" action="{{ url_for('view_inventory') }}">
-            <label><input type="radio" name="filter" value="quantity_high_to_low"> Quantity (High to Low)</label>
-            <label><input type="radio" name="filter" value="quantity_low_to_high"> Quantity (Low to High)</label>
-            <label><input type="radio" name="filter" value="price_high_to_low"> Price (High to Low)</label>
-            <label><input type="radio" name="filter" value="price_low_to_high"> Price (Low to High)</label>
-            <label><input type="radio" name="filter" value="expiration_soon"> Expiration Soon</label>
-            <label><input type="radio" name="filter" value="controls_only"> Controlled Substances Only</label>
-            <label><input type="radio" name="filter" value="non_controls_only"> Non-Controlled Substances Only</label>
-            <br>
-            <input type="text" name="credentials" maxlength="4" pattern="\d{4}" placeholder="Enter 4-Digit Credentials" required>
-            <br>
-            <button type="submit" class="filter-button">Apply Filters</button>
-        </form>
-    </div>
-
     <!-- Inventory Table -->
     <table>
         <thead>
             <tr>
                 <th>Drug Name</th>
+                <th>NDC Number</th>
                 <th>Expiration Date</th>
-                <th>Quantity</th>
-                <th>Cost</th>
-                <th>Controlled Status</th>
-                <th>Storage Requirements</th>
+                <th>Balance on Hand</th>
+                <th>Unit Cost</th>
+                <th>Inventory Value</th>
             </tr>
         </thead>
         <tbody>
             {% for med in inventory %}
             <tr>
-                <td>{{ med[0] }}</td>
-                <td>{{ med[1] }}</td>
-                <td>{{ med[2] }}</td>
-                <td>{{ med[3] }}</td>
-                <td>{{ med[4] }}</td>
-                <td>{{ med[5] }}</td>
+                <td>{{ med[0] if med[0] is not none else 'N/A' }}</td> <!-- Drug Name -->
+                <td>{{ med[1] if med[1] is not none else 'N/A' }}</td> <!-- NDC Number -->
+                <td>{{ med[2] if med[2] is not none else 'N/A' }}</td> <!-- Expiration Date -->
+                <td>{{ med[3] if med[3] is not none else 0 }}</td> <!-- Balance on Hand -->
+                <td>${{ "%.2f"|format(med[4]) if med[4] is not none else '0.00' }}</td> <!-- Unit Cost -->
+                <td>${{ "%.2f"|format(med[5]) if med[5] is not none else '0.00' }}</td> <!-- Inventory Value -->
             </tr>
             {% endfor %}
         </tbody>
     </table>
+
+    <!-- Cancel Button -->
+    <div class="button-group">
+        <a href="{{ url_for('inventory') }}" class="button cancel-button">Cancel</a>
+    </div>
 </body>
 </html>

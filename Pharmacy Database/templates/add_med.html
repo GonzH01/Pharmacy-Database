@@ -34,30 +34,104 @@
             box-sizing: border-box;
         }
 
-        button {
-            width: 100%;
-            padding: 10px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
+        .ndc-credentials-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
 
-        button:hover {
+        .button {
+            width: 48%;
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            border: none;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .submit-button {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .submit-button:hover {
             background-color: #45a049;
+        }
+
+        .cancel-button {
+            background-color: #f44336;
+            color: white;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .cancel-button:hover {
+            background-color: #d32f2f;
         }
 
         .flash-messages {
             color: red;
             margin-bottom: 20px;
         }
+
+        .button-group {
+            display: flex;
+            justify-content: space-between;
+        }
     </style>
+    <script>
+        // Function to check if the NDC already exists in the database
+        async function checkNDC() {
+            const ndcInput = document.getElementById('ndc').value;
+            const credentials = document.getElementById('ndc_credentials').value;
+
+            if (ndcInput.length === 11 && credentials.length === 4) {
+                try {
+                    const response = await fetch(`/check_ndc?ndc=${ndcInput}&credentials=${credentials}`, {
+                        method: 'GET'
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+
+                    const data = await response.json();
+
+                    if (data.exists) {
+                        // Autofill form fields
+                        document.getElementById('drug_name').value = data.drug_name || '';
+                        document.getElementById('strength').value = data.strength || '';
+                        document.getElementById('dosage_form').value = data.dosage_form || '';
+                        document.getElementById('manufacturer_name').value = data.manufacturer_name || '';
+                        document.getElementById('unit_price').value = data.unit_price || '';
+                        document.getElementById('phone_number').value = data.phone_number || '';
+                        document.getElementById('email').value = data.email || '';
+                        document.getElementById('fax').value = data.fax || '';
+                        document.getElementById('description').value = data.description || '';
+                        document.getElementById('storage_requirements').value = data.storage_requirements || '';
+                        document.getElementById('controlled_substance_status').value = data.controlled_substance_status || '';
+
+                        alert('NDC found! Autofilled medication details.');
+                    } else {
+                        alert('No match found for NDC.');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error checking NDC. Please try again.');
+                }
+            } else {
+                alert('Please enter a valid 11-digit NDC and 4-digit credentials.');
+            }
+        }
+    </script>
 </head>
 <body>
     <h1>Add New Medication</h1>
 
-    <!-- Flash message for feedback -->
+    <!-- Flash messages for feedback -->
     {% with messages = get_flashed_messages() %}
         {% if messages %}
             <div class="flash-messages">
@@ -71,56 +145,81 @@
     {% endwith %}
 
     <form method="POST" action="{{ url_for('add_med') }}">
+        <!-- NDC Number input with credentials -->
+        <div class="ndc-credentials-group">
+            <div style="flex: 2;">
+                <label for="ndc">NDC Number (11 digits):</label>
+                <input type="text" id="ndc" name="ndc" maxlength="11" pattern="\d{11}" required>
+            </div>
+            <div style="flex: 1;">
+                <label for="ndc_credentials">4-Digit Credentials:</label>
+                <input type="text" id="ndc_credentials" name="ndc_credentials" maxlength="4" pattern="\d{4}" required>
+            </div>
+            <button type="button" class="button submit-button" onclick="checkNDC()">Check NDC</button>
+        </div>
+
+        <!-- Drug Name input -->
         <label for="drug_name">Drug Name (max 255 chars):</label>
         <input type="text" id="drug_name" name="drug_name" maxlength="255" required>
 
-        <label for="ndc">NDC Number (11 digits):</label>
-        <input type="text" id="ndc" name="ndc" maxlength="11" pattern="\d{11}" required>
-
+        <!-- Dosage Form selection -->
         <label for="dosage_form">Dosage Form:</label>
         <select id="dosage_form" name="dosage_form" required>
             <option value="">Select Form</option>
             <option value="tablet/capsule">Tablet/Capsule</option>
-            <option value="liquid">Liquid (ml)</option>
+            <option value="liquid(ml)">Liquid (ml)</option>
             <option value="each">Each (e.g., packet)</option>
         </select>
 
+        <!-- Strength input -->
         <label for="strength">Strength (e.g., 500 mg):</label>
         <input type="text" id="strength" name="strength" maxlength="50" required>
 
+        <!-- Quantity input -->
         <label for="quantity">Quantity (e.g., 30 bottles):</label>
         <input type="text" id="quantity" name="quantity" pattern="\d+" required>
 
+        <!-- Quantity Per Unit input -->
         <label for="quantity_per_unit">Quantity Per Unit (e.g., 30 tablets per bottle):</label>
-        <input type="text" id="quantity_per_unit" name="quantity_per_unit" maxlength="50" required>
+        <input type="text" id="quantity_per_unit" name="quantity_per_unit" pattern="\d+" required>
 
+        <!-- Expiration Date input -->
         <label for="expiration_date">Expiration Date:</label>
         <input type="date" id="expiration_date" name="expiration_date" required>
 
+        <!-- Lot Number input -->
         <label for="lot_number">Lot Number (max 50 chars):</label>
         <input type="text" id="lot_number" name="lot_number" maxlength="50" required>
 
+        <!-- Manufacturer Name input -->
         <label for="manufacturer_name">Manufacturer Name (max 255 chars):</label>
         <input type="text" id="manufacturer_name" name="manufacturer_name" maxlength="255" required>
 
+        <!-- Unit Price input -->
         <label for="unit_price">Unit Price (e.g., 10.99):</label>
         <input type="text" id="unit_price" name="unit_price" pattern="\d+(\.\d{2})?" required>
 
+        <!-- Manufacturer Phone Number input -->
         <label for="phone_number">Manufacturer Phone Number (10 digits):</label>
         <input type="text" id="phone_number" name="phone_number" maxlength="10" pattern="\d{10}" required>
 
+        <!-- Manufacturer Email input -->
         <label for="email">Manufacturer Email:</label>
         <input type="email" id="email" name="email" maxlength="255" required>
 
+        <!-- Fax Number input -->
         <label for="fax">Fax Number (Optional, 10 digits):</label>
         <input type="text" id="fax" name="fax" maxlength="10" pattern="\d{10}">
 
+        <!-- Description input -->
         <label for="description">Description (Optional, max 255 chars):</label>
         <textarea id="description" name="description" maxlength="255"></textarea>
 
+        <!-- Storage Requirements input -->
         <label for="storage_requirements">Storage Requirements (Optional, max 255 chars):</label>
         <textarea id="storage_requirements" name="storage_requirements" maxlength="255"></textarea>
 
+        <!-- Controlled Substance selection -->
         <label for="controlled_substance_status">Controlled Substance (y/n):</label>
         <select id="controlled_substance_status" name="controlled_substance_status" required>
             <option value="">Select</option>
@@ -128,13 +227,15 @@
             <option value="n">No</option>
         </select>
 
+        <!-- Allergies/Warnings input -->
         <label for="allergies_warnings">Allergies/Warnings (Optional, max 255 chars):</label>
         <textarea id="allergies_warnings" name="allergies_warnings" maxlength="255"></textarea>
 
-        <label for="credentials">Enter 4-Digit Credentials:</label>
-        <input type="text" id="credentials" name="credentials" maxlength="4" pattern="\d{4}" required>
-
-        <button type="submit">Add New Medication</button>
+        <!-- Submit and Cancel buttons -->
+        <div class="button-group">
+            <button type="submit" class="button submit-button">Add New Medication</button>
+            <a href="{{ url_for('inventory') }}" class="button cancel-button">Cancel</a>
+        </div>
     </form>
 </body>
 </html>

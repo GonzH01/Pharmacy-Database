@@ -7,27 +7,30 @@
     <style>
         body {
             font-family: Arial, sans-serif;
+            margin: 20px;
         }
 
         h1 {
             color: #333;
+            text-align: center;
         }
 
         .container {
-            margin: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+            text-align: center;
         }
 
         .button {
             background-color: #4CAF50;
             color: white;
             padding: 10px 20px;
-            text-align: center;
-            display: inline-block;
+            margin: 10px 5px;
             font-size: 16px;
-            margin: 10px 2px;
             cursor: pointer;
             border: none;
             border-radius: 5px;
+            text-decoration: none;
         }
 
         .button:hover {
@@ -40,6 +43,24 @@
             margin-bottom: 20px;
             border-radius: 5px;
             border: 1px solid #ccc;
+            color: red;
+        }
+
+        .input-field {
+            padding: 10px;
+            margin-right: 10px;
+            font-size: 16px;
+            width: 200px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        .form-inline {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
         }
     </style>
 </head>
@@ -60,19 +81,23 @@
             {% endif %}
         {% endwith %}
 
-        <p>Here you can manage inventory. Use the buttons below to add, view, or edit inventory items.</p>
+        <p>Manage your inventory by adding new medications or viewing existing ones below.</p>
 
-        <!-- Buttons for actions (Add/View inventory) -->
-        <div>
-            <a href="{{ url_for('add_med') }}"><button class="button">Add New Med</button></a>
-            <a href="{{ url_for('view_inventory') }}"><button class="button">View Inventory</button></a>
+        <!-- Form for entering credentials and viewing inventory -->
+        <div class="form-inline">
+            <form method="POST" action="{{ url_for('view_inventory') }}">
+                <input type="text" name="credentials" class="input-field" maxlength="4" pattern="\d{4}" placeholder="Enter 4-digit credentials" required>
+                <button type="submit" class="button">View Inventory</button>
+            </form>
         </div>
 
-        <!-- Link to go back to the main menu -->
+        <!-- Add New Med Button -->
         <br>
-        <a href="{{ url_for('main_menu', from_management=True) }}">
-            <button type="button" class="button">Back to Main Menu</button>
-        </a>
+        <a href="{{ url_for('add_med') }}" class="button">Add New Med</a>
+
+        <!-- Back to Main Menu -->
+        <br><br>
+        <a href="{{ url_for('main_menu', from_management=True) }}" class="button">Back to Main Menu</a>
     </div>
 </body>
 </html>
