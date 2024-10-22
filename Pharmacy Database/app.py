@@ -383,25 +383,20 @@ def inventory():
 # Route to view inventory
 @app.route('/view_inventory', methods=['GET', 'POST'])
 def view_inventory():
-    if request.method == 'POST':
-        # Get credentials from form
-        entered_credentials = request.form.get('credentials')
+    # Get credentials from form or previous session
+    entered_credentials = request.form.get('credentials') or request.args.get('credentials')
 
-        # Verify credentials before accessing the database
-        user_info = verify_credentials(entered_credentials)
-        if not user_info:
-            flash("Invalid or expired credentials. Please try again.")
-            return redirect(url_for('inventory'))
+    # Verify credentials before accessing the database
+    user_info = verify_credentials(entered_credentials)
+    if not user_info:
+        flash("Invalid or expired credentials. Please try again.")
+        return redirect(url_for('inventory'))
 
-        # Fetch inventory data
-        inventory_data = view_inventory_table(user_info['username'], user_info['password'])
+    # Fetch inventory data
+    inventory_data = view_inventory_table(user_info['username'], user_info['password'])
 
-        # Render the template with fetched data
-        return render_template('view_inventory.html', inventory=inventory_data)
-
-    # If GET request, just show the empty form
-    return render_template('view_inventory.html', inventory=[])
-
+    # Render the template with fetched data
+    return render_template('view_inventory.html', inventory=inventory_data)
 
 
 # View Profit Table Route

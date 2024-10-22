@@ -179,4 +179,4 @@ def view_inventory_table(username, password):
     """)
 
     rows = cursor.fetchall()
-    return rows
+    return rows 
