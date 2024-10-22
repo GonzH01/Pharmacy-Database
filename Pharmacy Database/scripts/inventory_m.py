@@ -163,17 +163,19 @@ def get_drug_by_ndc(ndc, username=None, password=None):
     return result
 
 def view_inventory_table(username, password):
-    """View all inventory data along with the balance table."""
+    """View inventory data with unique NDCs, swapping NDC and drug name columns."""
     mydb = connect_to_database(username, password)
     if not mydb:
         return []
 
     cursor = mydb.cursor()
 
+    # Fetch inventory data with unique NDCs, swapping NDC and drug name columns
     cursor.execute("""
-    SELECT i.drug_name, i.ndc_number, i.expiration_date, b.balance_on_hand, b.unit_cost, b.inventory_value
+    SELECT DISTINCT i.ndc_number, i.drug_name, b.balance_on_hand, b.unit_cost, b.inventory_value
     FROM inventory i
     LEFT JOIN balance b ON i.ndc_number = b.ndc_number
+    GROUP BY i.ndc_number, i.drug_name, b.balance_on_hand, b.unit_cost, b.inventory_value
     """)
 
     rows = cursor.fetchall()

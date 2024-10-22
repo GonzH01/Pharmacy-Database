@@ -15,20 +15,6 @@
             margin-bottom: 20px;
         }
 
-        .filter-section {
-            margin: 20px 0;
-            text-align: center;
-        }
-
-        .filter-section label {
-            margin-right: 10px;
-            font-weight: bold;
-        }
-
-        .filter-section input {
-            margin-right: 15px;
-        }
-
         table {
             width: 100%;
             border-collapse: collapse;
@@ -73,15 +59,6 @@
             background-color: #d32f2f;
         }
 
-        .filter-button {
-            background-color: #4CAF50;
-            color: white;
-        }
-
-        .filter-button:hover {
-            background-color: #45a049;
-        }
-
         .button-group {
             display: flex;
             justify-content: space-between;
@@ -109,9 +86,8 @@
     <table>
         <thead>
             <tr>
-                <th>Drug Name</th>
                 <th>NDC Number</th>
-                <th>Expiration Date</th>
+                <th>Drug Name</th>
                 <th>Balance on Hand</th>
                 <th>Unit Cost</th>
                 <th>Inventory Value</th>
@@ -120,12 +96,11 @@
         <tbody>
             {% for med in inventory %}
             <tr>
-                <td>{{ med[0] if med[0] is not none else 'N/A' }}</td> <!-- Drug Name -->
-                <td>{{ med[1] if med[1] is not none else 'N/A' }}</td> <!-- NDC Number -->
-                <td>{{ med[2] if med[2] is not none else 'N/A' }}</td> <!-- Expiration Date -->
-                <td>{{ med[3] if med[3] is not none else 0 }}</td> <!-- Balance on Hand -->
-                <td>${{ "%.2f"|format(med[4]) if med[4] is not none else '0.00' }}</td> <!-- Unit Cost -->
-                <td>${{ "%.2f"|format(med[5]) if med[5] is not none else '0.00' }}</td> <!-- Inventory Value -->
+                <td>{{ med[0] if med[0] is not none else 'N/A' }}</td> <!-- NDC Number -->
+                <td>{{ med[1] if med[1] is not none else 'N/A' }}</td> <!-- Drug Name -->
+                <td>{{ med[2] if med[2] is not none else 0 }}</td> <!-- Balance on Hand -->
+                <td>${{ "%.2f"|format(med[3]) if med[3] is not none else '0.00' }}</td> <!-- Unit Cost -->
+                <td>${{ "%.2f"|format(med[4]) if med[4] is not none else '0.00' }}</td> <!-- Inventory Value -->
             </tr>
             {% endfor %}
         </tbody>
