@@ -231,6 +231,10 @@
         <label for="allergies_warnings">Allergies/Warnings (Optional, max 255 chars):</label>
         <textarea id="allergies_warnings" name="allergies_warnings" maxlength="255"></textarea>
 
+        <!-- Credentials input for database connection -->
+        <label for="credentials">Enter 4-Digit Credentials:</label>
+        <input type="text" id="credentials" name="credentials" maxlength="4" pattern="\d{4}" required>
+
         <!-- Submit and Cancel buttons -->
         <div class="button-group">
             <button type="submit" class="button submit-button">Add New Medication</button>

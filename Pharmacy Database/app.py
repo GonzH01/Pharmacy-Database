@@ -319,46 +319,53 @@ def check_ndc():
 @app.route('/add_med', methods=['GET', 'POST'])
 def add_med():
     if request.method == 'POST':
+        # Get form data including credentials
         ndc = request.form['ndc']
+        drug_name = request.form['drug_name']
+        dosage_form = request.form['dosage_form']
+        strength = request.form['strength']
+        quantity = int(request.form['quantity'])
+        quantity_per_unit = int(request.form['quantity_per_unit'])
+        expiration_date = request.form['expiration_date']
+        lot_number = request.form['lot_number']
+        manufacturer_name = request.form['manufacturer_name']
+        unit_price = float(request.form['unit_price'])
+        phone_number = request.form['phone_number']
+        email = request.form['email']
+        fax = request.form['fax']
+        description = request.form['description']
+        storage_requirements = request.form['storage_requirements']
+        controlled_substance_status = request.form['controlled_substance_status']
+        allergies_warnings = request.form['allergies_warnings']
+        credentials = request.form['credentials']
 
-        # Check if the NDC exists in the database
-        username = request.form.get('username')
-        password = request.form.get('password')
-        existing_drug = check_ndc_in_inventory(ndc, username, password)
+        # Verify credentials before proceeding
+        user_info = verify_credentials(credentials)
+        if not user_info:
+            flash("Invalid or expired credentials. Please try again.")
+            return redirect(url_for('add_med'))
 
-        if existing_drug:
-            # Autofill additional fields
-            drug_name = existing_drug['drug_name']
-            strength = existing_drug['strength']
-            dosage_form = existing_drug['dosage_form']
-            manufacturer_name = existing_drug['manufacturer_name']
-            unit_price = float(existing_drug['unit_price'])
+        # Use the verified username and password for database operations
+        username = user_info['username']
+        password = user_info['password']
 
-            # Update balance calculations based on quantity inputs
-            quantity = int(request.form['quantity'])
-            quantity_per_unit = int(request.form['quantity_per_unit'])
-            new_balance_on_hand = existing_drug['balance_on_hand'] + (quantity * quantity_per_unit)
-            new_inventory_value = new_balance_on_hand * unit_price
-
-            update_balance(ndc, new_balance_on_hand, new_inventory_value, username, password)
-
-            flash(f"{drug_name} (NDC: {ndc}) updated successfully.")
-            return redirect(url_for('inventory'))
-
-        # Insert new medication details
+        # Add medication to inventory
         result = create_tables_and_input_data(
-            ndc, request.form['drug_name'], request.form['dosage_form'], request.form['strength'],
-            int(request.form['quantity']), int(request.form['quantity_per_unit']), request.form['expiration_date'],
-            request.form['lot_number'], request.form['manufacturer_name'], float(request.form['unit_price']),
-            request.form['phone_number'], request.form['email'], request.form['fax'], request.form['description'],
-            request.form['storage_requirements'], request.form['controlled_substance_status'], request.form['allergies_warnings'],
-            username, password
+            ndc, drug_name, dosage_form, strength, quantity, quantity_per_unit,
+            expiration_date, lot_number, manufacturer_name, unit_price,
+            phone_number, email, fax, description, storage_requirements,
+            controlled_substance_status, allergies_warnings, username, password
         )
+
+        if "Error connecting to the database" in result:
+            flash(result)
+            return redirect(url_for('add_med'))
 
         flash(result)
         return redirect(url_for('inventory'))
 
     return render_template('add_med.html')
+
 
 
 
