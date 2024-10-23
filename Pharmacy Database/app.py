@@ -367,7 +367,23 @@ def add_med():
     return render_template('add_med.html')
 
 
+# Route to view inventory sorted by unit price
+@app.route('/sort_inventory', methods=['POST'])
+def sort_inventory():
+    # Get credentials from form
+    entered_credentials = request.form.get('credentials')
 
+    # Verify credentials before accessing the database
+    user_info = verify_credentials(entered_credentials)
+    if not user_info:
+        flash("Invalid or expired credentials. Please try again.")
+        return redirect(url_for('view_inventory'))
+
+    # Fetch inventory data sorted by unit price
+    inventory_data = view_inventory_table(user_info['username'], user_info['password'], sort_by_unit_price=True)
+
+    # Render the template with fetched data
+    return render_template('view_inventory.html', inventory=inventory_data)
 
 
 # Inventory Route (For managing inventory)
@@ -380,23 +396,26 @@ def inventory():
     # Render the inventory management page
     return render_template('inventory.html')
 
-# Route to view inventory
+# Route to view inventory with sorting options
 @app.route('/view_inventory', methods=['GET', 'POST'])
 def view_inventory():
-    # Get credentials from form or previous session
-    entered_credentials = request.form.get('credentials') or request.args.get('credentials')
+    # Get the sorting option from the request (default is 'balance_on_hand')
+    sort_by = request.args.get('sort_by', 'balance_on_hand')
 
-    # Verify credentials before accessing the database
-    user_info = verify_credentials(entered_credentials)
+    # Get the stored user credentials (assuming they are temporarily stored)
+    user_info = credentials_storage.get(list(credentials_storage.keys())[0])  # Retrieve the first stored credentials
     if not user_info:
-        flash("Invalid or expired credentials. Please try again.")
-        return redirect(url_for('inventory'))
+        flash("Could not retrieve credentials. Please log in again.")
+        return redirect(url_for('login'))
 
-    # Fetch inventory data
-    inventory_data = view_inventory_table(user_info['username'], user_info['password'])
+    # Fetch the inventory data with the selected sorting option
+    inventory_data = view_inventory_table(user_info['username'], user_info['password'], sort_by)
 
-    # Render the template with fetched data
-    return render_template('view_inventory.html', inventory=inventory_data)
+    # Render the view_inventory.html template with the fetched data
+    return render_template('view_inventory.html', inventory=inventory_data, sort_by=sort_by)
+
+
+
 
 
 # View Profit Table Route

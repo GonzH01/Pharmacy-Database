@@ -162,21 +162,32 @@ def get_drug_by_ndc(ndc, username=None, password=None):
 
     return result
 
-def view_inventory_table(username, password):
-    """View inventory data with unique NDCs, swapping NDC and drug name columns."""
+def view_inventory_table(username, password, sort_by=None):
+    """View inventory data with sorting options."""
     mydb = connect_to_database(username, password)
     if not mydb:
         return []
 
     cursor = mydb.cursor()
 
-    # Fetch inventory data with unique NDCs, swapping NDC and drug name columns
-    cursor.execute("""
+    # Set the sort order based on the selected sorting criteria
+    if sort_by == "unit_price":
+        sort_order = "b.unit_cost DESC"
+    elif sort_by == "inventory_value":
+        sort_order = "b.inventory_value DESC"
+    elif sort_by == "balance_on_hand":
+        sort_order = "b.balance_on_hand DESC"
+    else:
+        sort_order = "b.balance_on_hand DESC"
+
+    # Fetch inventory data with sorting
+    cursor.execute(f"""
     SELECT DISTINCT i.ndc_number, i.drug_name, b.balance_on_hand, b.unit_cost, b.inventory_value
     FROM inventory i
     LEFT JOIN balance b ON i.ndc_number = b.ndc_number
     GROUP BY i.ndc_number, i.drug_name, b.balance_on_hand, b.unit_cost, b.inventory_value
+    ORDER BY {sort_order}
     """)
 
     rows = cursor.fetchall()
-    return rows 
+    return rows
