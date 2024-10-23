@@ -1,4 +1,5 @@
 from connect_to_database import connect_to_database
+import csv
 
 def create_tables_and_input_data(ndc, drug_name, dosage_form, strength, quantity, quantity_per_unit,
                                  expiration_date, lot_number, manufacturer_name, unit_price, phone_number, email, fax,
@@ -162,32 +163,53 @@ def get_drug_by_ndc(ndc, username=None, password=None):
 
     return result
 
-def view_inventory_table(username, password, sort_by=None):
-    """View inventory data with sorting options."""
+def view_inventory_table(username, password, sort_by='boh', sort_order='desc'):
+    """View inventory data with sorting and unique NDCs."""
     mydb = connect_to_database(username, password)
     if not mydb:
-        return []
+        return [], 0, 0  # Return empty list and zeros if the connection fails
 
     cursor = mydb.cursor()
 
-    # Set the sort order based on the selected sorting criteria
-    if sort_by == "unit_price":
-        sort_order = "b.unit_cost DESC"
-    elif sort_by == "inventory_value":
-        sort_order = "b.inventory_value DESC"
-    elif sort_by == "balance_on_hand":
-        sort_order = "b.balance_on_hand DESC"
-    else:
-        sort_order = "b.balance_on_hand DESC"
+    # Define the sorting column based on user input
+    sort_column = {
+        'boh': 'MAX(b.balance_on_hand)',
+        'unit_price': 'MAX(b.unit_cost)',
+        'inventory_value': 'MAX(b.inventory_value)'
+    }.get(sort_by, 'MAX(b.balance_on_hand)')
 
-    # Fetch inventory data with sorting
+    # Define the sorting order (ASC or DESC)
+    sort_order = 'ASC' if sort_order.lower() == 'asc' else 'DESC'
+
+    # Fetch inventory data with unique NDCs and sorting
     cursor.execute(f"""
-    SELECT DISTINCT i.ndc_number, i.drug_name, b.balance_on_hand, b.unit_cost, b.inventory_value
+    SELECT i.drug_name, i.ndc_number, MAX(b.balance_on_hand), MAX(b.unit_cost), MAX(b.inventory_value)
     FROM inventory i
     LEFT JOIN balance b ON i.ndc_number = b.ndc_number
-    GROUP BY i.ndc_number, i.drug_name, b.balance_on_hand, b.unit_cost, b.inventory_value
-    ORDER BY {sort_order}
+    WHERE b.inventory_value IS NOT NULL
+    GROUP BY i.ndc_number, i.drug_name
+    ORDER BY {sort_column} {sort_order}
     """)
 
     rows = cursor.fetchall()
-    return rows
+
+    # Calculate total inventory value and item count safely
+    total_inventory_value = sum(row[4] for row in rows if len(row) > 4 and row[4] is not None)
+    inventory_items_count = len(rows)
+
+    return rows, total_inventory_value, inventory_items_count
+
+
+
+
+def export_inventory_to_csv(inventory_data, file_path):
+    """Export inventory data to a CSV file."""
+    try:
+        with open(file_path, mode='w', newline='', encoding='utf-8') as file:
+            writer = csv.writer(file)
+            writer.writerow(["Drug Name", "NDC Number", "Balance on Hand", "Unit Cost", "Inventory Value"])
+            for med in inventory_data:
+                writer.writerow([med[1], med[0], med[2], med[3], med[4]])  # Adjust based on column order
+        return f"Inventory data exported to {file_path} successfully."
+    except Exception as e:
+        return f"Error exporting to CSV: {e}"

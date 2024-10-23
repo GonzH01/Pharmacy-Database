@@ -1,0 +1,2 @@
+Drug Name,NDC Number,Balance on Hand,Unit Cost,Inventory Value
+"('trazadone', '11111111111', 1800, Decimal('0.39'), Decimal('702.00'))","('trazadone', '11111111111', 1800, Decimal('0.39'), Decimal('702.00'))","('lisinopril', '55555544444', 900, Decimal('0.99'), Decimal('891.00'))","('tradjenta', '55555555555', 30, Decimal('0.39'), Decimal('11.70'))","('tradjenta', '55555555555', 30, Decimal('0.39'), Decimal('11.70'))"

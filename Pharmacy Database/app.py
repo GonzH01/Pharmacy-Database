@@ -1,9 +1,20 @@
-from flask import Flask, render_template, request, redirect, jsonify, url_for, flash
+from flask import Flask, render_template, request, redirect, jsonify, url_for, flash, send_file, make_response
 from scripts.patient_m import create_patient_profile, search_patients, get_patient_profile
-from scripts.inventory_m import create_tables_and_input_data, view_inventory_table, update_balance, get_drug_by_ndc, check_ndc_in_inventory 
+from scripts.inventory_m import (
+    create_tables_and_input_data, 
+    view_inventory_table, 
+    update_balance, 
+    get_drug_by_ndc, 
+    check_ndc_in_inventory, 
+    export_inventory_to_csv  # For CSV export functionality
+)
 from connect_to_database import connect_to_database
 import random
 from datetime import datetime, timedelta
+import os  # For file handling
+
+
+
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -36,7 +47,11 @@ def cleanup_expired_credentials():
 # Verify credentials before making any database connection
 def verify_credentials(entered_credentials):
     cleanup_expired_credentials()  # Clean up expired credentials
-    return credentials_storage.get(int(entered_credentials))
+
+    # Check if entered_credentials is not empty and is numeric
+    if entered_credentials and entered_credentials.isdigit():
+        return credentials_storage.get(int(entered_credentials))
+    return None
 
 # Login Route
 @app.route('/', methods=['GET', 'POST'])
@@ -396,24 +411,59 @@ def inventory():
     # Render the inventory management page
     return render_template('inventory.html')
 
-# Route to view inventory with sorting options
 @app.route('/view_inventory', methods=['GET', 'POST'])
 def view_inventory():
-    # Get the sorting option from the request (default is 'balance_on_hand')
-    sort_by = request.args.get('sort_by', 'balance_on_hand')
+    sort_by = request.args.get('sort_by', 'boh')
+    sort_order = request.args.get('sort_order', 'desc')
+    
+    # Get credentials from form or previous session
+    entered_credentials = request.form.get('credentials') or request.args.get('credentials')
 
-    # Get the stored user credentials (assuming they are temporarily stored)
-    user_info = credentials_storage.get(list(credentials_storage.keys())[0])  # Retrieve the first stored credentials
+    # Verify credentials before accessing the database
+    user_info = verify_credentials(entered_credentials)
     if not user_info:
-        flash("Could not retrieve credentials. Please log in again.")
-        return redirect(url_for('login'))
+        flash("Invalid or expired credentials. Please try again.")
+        return redirect(url_for('inventory'))
 
-    # Fetch the inventory data with the selected sorting option
-    inventory_data = view_inventory_table(user_info['username'], user_info['password'], sort_by)
+    # Fetch inventory data, total value, and item count
+    inventory_data, total_inventory_value, inventory_items_count = view_inventory_table(
+        user_info['username'], user_info['password'], sort_by, sort_order
+    )
 
-    # Render the view_inventory.html template with the fetched data
-    return render_template('view_inventory.html', inventory=inventory_data, sort_by=sort_by)
+    # Render the template with fetched data and totals
+    return render_template('view_inventory.html', inventory=inventory_data, 
+                           total_inventory_value=total_inventory_value, 
+                           inventory_items_count=inventory_items_count)
 
+
+
+# Route to download inventory as CSV
+@app.route('/download_inventory_csv', methods=['POST'])
+def download_inventory_csv():
+    entered_credentials = request.form.get('credentials')
+
+    # Verify credentials before accessing the database
+    user_info = verify_credentials(entered_credentials)
+    if not user_info:
+        flash("Invalid or expired credentials. Please try again.")
+        return redirect(url_for('view_inventory'))
+
+    # Fetch inventory data
+    inventory_data = view_inventory_table(user_info['username'], user_info['password'])
+
+    # Create CSV content from the inventory data
+    csv_content = export_inventory_to_csv(inventory_data, 'inventory_data.csv')
+
+    # Read the CSV content
+    with open('inventory_data.csv', 'r', encoding='utf-8') as file:
+        csv_data = file.read()
+
+    # Create a response for downloading the CSV
+    response = make_response(csv_data)
+    response.headers['Content-Disposition'] = 'attachment; filename=inventory_data.csv'
+    response.headers['Content-Type'] = 'text/csv'
+
+    return response
 
 
 

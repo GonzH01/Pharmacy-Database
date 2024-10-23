@@ -15,6 +15,28 @@
             margin-bottom: 20px;
         }
 
+        .summary-section {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .filter-section {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .filter-section label {
+            margin-right: 10px;
+            font-weight: bold;
+        }
+
+        .filter-section input {
+            margin-right: 15px;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -37,30 +59,15 @@
             text-align: center;
         }
 
-        .button-group {
-            display: flex;
-            justify-content: center;
-            margin-top: 20px;
-        }
-
         .button {
-            width: auto;
-            padding: 10px 20px;
+            width: 48%;
+            padding: 10px;
             font-size: 16px;
             cursor: pointer;
             border-radius: 5px;
             border: none;
-            margin-right: 10px;
+            margin-top: 10px;
             text-align: center;
-        }
-
-        .sort-button {
-            background-color: #4CAF50;
-            color: white;
-        }
-
-        .sort-button:hover {
-            background-color: #45a049;
         }
 
         .cancel-button {
@@ -74,27 +81,39 @@
             background-color: #d32f2f;
         }
 
-        .credentials-section {
+        .filter-button {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .filter-button:hover {
+            background-color: #45a049;
+        }
+
+        .save-button {
+            background-color: #2196F3;
+            color: white;
+        }
+
+        .save-button:hover {
+            background-color: #1E88E5;
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: space-between;
             margin-top: 20px;
-            text-align: center;
-        }
-
-        .credentials-section label {
-            margin-right: 10px;
-            font-weight: bold;
-        }
-
-        .credentials-section input {
-            padding: 8px;
-            margin-right: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            box-sizing: border-box;
         }
     </style>
 </head>
 <body>
     <h1>View Inventory</h1>
+
+    <!-- Inventory Summary -->
+    <div class="summary-section">
+        <div>Total Inventory Value: ${{ "%.2f"|format(total_inventory_value) }}</div>
+        <div>Inventory Items: {{ inventory_items_count }}</div>
+    </div>
 
     <!-- Flash message for feedback -->
     {% with messages = get_flashed_messages() %}
@@ -109,12 +128,37 @@
         {% endif %}
     {% endwith %}
 
+    <!-- Sorting Form -->
+    <form method="GET" action="{{ url_for('view_inventory') }}">
+        <!-- Credentials Entry Box -->
+        <div class="filter-section">
+            <label for="credentials">Enter Credentials:</label>
+            <input type="text" id="credentials" name="credentials" maxlength="4" pattern="\d{4}" required>
+        </div>
+
+        <!-- Sorting Buttons -->
+        <div class="button-group">
+            <button type="submit" name="sort_by" value="boh" class="button filter-button" onclick="this.form.sort_order.value='desc';">
+                High to Low BOH
+            </button>
+            <button type="submit" name="sort_by" value="unit_price" class="button filter-button" onclick="this.form.sort_order.value='desc';">
+                High to Low Unit Price
+            </button>
+            <button type="submit" name="sort_by" value="inventory_value" class="button filter-button" onclick="this.form.sort_order.value='desc';">
+                High to Low Inventory Value
+            </button>
+        </div>
+
+        <!-- Hidden Input for Sort Order -->
+        <input type="hidden" name="sort_order" value="desc">
+    </form>
+
     <!-- Inventory Table -->
     <table>
         <thead>
             <tr>
-                <th>NDC Number</th>
                 <th>Drug Name</th>
+                <th>NDC Number</th>
                 <th>Balance on Hand</th>
                 <th>Unit Cost</th>
                 <th>Inventory Value</th>
@@ -123,8 +167,8 @@
         <tbody>
             {% for med in inventory %}
             <tr>
-                <td>{{ med[0] if med[0] is not none else 'N/A' }}</td> <!-- NDC Number -->
-                <td>{{ med[1] if med[1] is not none else 'N/A' }}</td> <!-- Drug Name -->
+                <td>{{ med[0] if med[0] is not none else 'N/A' }}</td> <!-- Drug Name -->
+                <td>{{ med[1] if med[1] is not none else 'N/A' }}</td> <!-- NDC Number -->
                 <td>{{ med[2] if med[2] is not none else 0 }}</td> <!-- Balance on Hand -->
                 <td>${{ "%.2f"|format(med[3]) if med[3] is not none else '0.00' }}</td> <!-- Unit Cost -->
                 <td>${{ "%.2f"|format(med[4]) if med[4] is not none else '0.00' }}</td> <!-- Inventory Value -->
@@ -133,22 +177,12 @@
         </tbody>
     </table>
 
-    <!-- Credentials Entry and Sorting Options -->
-    <div class="credentials-section">
-        <form method="GET" action="{{ url_for('view_inventory') }}">
-            <label for="credentials">Enter Credentials:</label>
-            <input type="text" id="credentials" name="credentials" maxlength="4" required>
-
-            <div class="button-group">
-                <button type="submit" name="sort_by" value="unit_price" class="button sort-button">High to Low Unit Price</button>
-                <button type="submit" name="sort_by" value="inventory_value" class="button sort-button">High to Low Inventory Value</button>
-                <button type="submit" name="sort_by" value="balance_on_hand" class="button sort-button">High to Low BOH</button>
-            </div>
-        </form>
-    </div>
-
-    <!-- Cancel Button -->
+    <!-- Save as CSV and Cancel Buttons -->
     <div class="button-group">
+        <form method="POST" action="{{ url_for('download_inventory_csv') }}">
+            <input type="hidden" name="credentials" value="{{ request.args.get('credentials', '') }}">
+            <button type="submit" class="button save-button">Save as CSV</button>
+        </form>
         <a href="{{ url_for('inventory') }}" class="button cancel-button">Cancel</a>
     </div>
 </body>
