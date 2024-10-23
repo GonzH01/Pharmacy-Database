@@ -68,12 +68,6 @@
             font-weight: bold;
         }
 
-        .flash-messages {
-            color: red;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
         .button {
             padding: 10px 20px;
             font-size: 16px;
@@ -130,19 +124,6 @@
         <div>Total Inventory Value: ${{ "%.2f"|format(total_inventory_value) }}</div>
         <div>Inventory Items: {{ inventory_items_count }}</div>
     </div>
-
-    <!-- Flash message for feedback -->
-    {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            <div class="flash-messages">
-                <ul>
-                    {% for message in messages %}
-                        <li>{{ message }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-        {% endif %}
-    {% endwith %}
 
     <!-- Filter and Credentials Section -->
     <form method="GET" action="{{ url_for('view_inventory') }}">

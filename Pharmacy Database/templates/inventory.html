@@ -8,6 +8,10 @@
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
+            position: relative;
+            min-height: 100vh;
+            background-color: #f4f4f4;
+            overflow-x: hidden;
         }
 
         h1 {
@@ -37,13 +41,13 @@
             background-color: #45a049;
         }
 
-        .flash-messages {
-            background-color: #f1f1f1;
-            padding: 10px;
-            margin-bottom: 20px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            color: red;
+        .cancel-button {
+            background-color: #90CAF9;
+            color: white;
+        }
+
+        .cancel-button:hover {
+            background-color: #64B5F6;
         }
 
         .input-field {
@@ -62,24 +66,26 @@
             align-items: center;
             margin-top: 20px;
         }
+
+        .background-image {
+            position: fixed;
+            bottom: 0;
+            right: 0;
+            z-index: -1;
+            opacity: 0.2;
+            max-width: 400px;
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Inventory Management</h1>
-
-        <!-- Flash message for feedback -->
-        {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                <div class="flash-messages">
-                    <ul>
-                        {% for message in messages %}
-                            <li>{{ message }}</li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            {% endif %}
-        {% endwith %}
 
         <p>Manage your inventory by adding new medications or viewing existing ones below.</p>
 
@@ -96,8 +102,12 @@
         <a href="{{ url_for('add_med') }}" class="button">Add New Med</a>
 
         <!-- Back to Main Menu -->
-        <br><br>
-        <a href="{{ url_for('main_menu', from_management=True) }}" class="button">Back to Main Menu</a>
+        <div class="button-group">
+            <a href="{{ url_for('main_menu', from_management=True) }}" class="button cancel-button">Back to Main Menu</a>
+        </div>
     </div>
+
+    <!-- Background Image -->
+    <img src="{{ url_for('static', filename='rb_1607.png') }}" alt="Inventory Background" class="background-image">
 </body>
 </html>
