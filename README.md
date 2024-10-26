@@ -1,4 +1,3 @@
-readme_content = """
 # Pharmacy Database Management System
 
 ## Overview
