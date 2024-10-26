@@ -70,12 +70,14 @@ def login():
         mydb = connect_to_database(username, password)
         if mydb:  # Successful connection
             credentials_code, expiration_time = generate_credentials(username, password)
-            flash(f"Your credentials are {credentials_code}. Expires in 24 hours: {expiration_time.strftime('%Y-%m-%d %I:%M:%S %p')}")
+            # Flash the credentials message with a different category (not "login")
+            flash(f"Your credentials are {credentials_code}. Expires in 24 hours: {expiration_time.strftime('%Y-%m-%d %I:%M:%S %p')}", category="credentials")
             return redirect(url_for('main_menu', credentials_code=credentials_code))  # Redirect to main menu with credentials
         else:
-            flash("Incorrect Username/Password")
+            flash("Incorrect Username/Password", category="login")
     
     return render_template('login.html')
+
 
 # Main Menu Route
 @app.route('/main_menu')

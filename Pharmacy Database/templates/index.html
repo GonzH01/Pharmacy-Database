@@ -18,7 +18,7 @@
         }
 
         h1 {
-            font-size: 36px; /* Increased font size */
+            font-size: 36px;
             color: #333;
             margin-bottom: 30px;
         }
@@ -71,19 +71,30 @@
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             border-radius: 10px;
             z-index: 1000;
+            text-align: center;
         }
 
         .close-btn {
             position: absolute;
-            top: 10px;
-            right: 10px;
+            top: 5px;
+            right: 5px;
             cursor: pointer;
             font-weight: bold;
-            color: #666;
+            color: white;
+            background-color: red;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            line-height: 1;
         }
 
         .close-btn:hover {
-            color: #000;
+            background-color: darkred;
         }
 
         .bubble-hidden {
@@ -95,12 +106,12 @@
             position: absolute;
             top: 0;
             right: 0;
-            width: 270px; /* Adjusted size (additional 3% increase) */
+            width: 270px;
             height: auto;
-            opacity: 0.7; /* Make it slightly transparent */
-            z-index: -1; /* Place behind other elements */
-            filter: drop-shadow(0px 0px 15px rgba(255, 255, 255, 0.5)); /* Soft fading effect */
-            border-radius: 20px; /* Adds a rounded fading effect to edges */
+            opacity: 0.7;
+            z-index: -1;
+            filter: drop-shadow(0px 0px 15px rgba(255, 255, 255, 0.5));
+            border-radius: 20px;
         }
     </style>
     <script>
@@ -129,8 +140,11 @@
     {% if credentials_code %}
     <div id="credential-bubble" class="credential-bubble">
         <span class="close-btn" onclick="closeBubble()">X</span>
-        <p>Your credentials are {{ credentials_code }}.</p>
-        <p>Expires on: {{ expiration_time.strftime('%Y-%m-%d %I:%M:%S %p') }}</p>
+        <p><strong>Your credentials are:</strong></p>
+        <p style="font-size: 24px; font-weight: bold; margin: 5px 0;">{{ credentials_code }}</p>
+        <p><strong>Expires on:</strong></p>
+        <p>{{ expiration_time.strftime('%Y-%m-%d') }}</p>
+        <p>{{ expiration_time.strftime('%I:%M:%S %p') }}</p>
     </div>
     {% endif %}
 

@@ -60,7 +60,7 @@
         <h1 style="text-align: center;">Login to Pharmacy Database</h1>
         
         <!-- Flash message for feedback -->
-        {% with messages = get_flashed_messages() %}
+        {% with messages = get_flashed_messages(category_filter=["login"]) %}
             {% if messages %}
                 <div class="flash-messages">
                     <ul>
