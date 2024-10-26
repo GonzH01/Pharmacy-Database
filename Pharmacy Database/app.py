@@ -12,21 +12,59 @@ from scripts.inventory_m import (
     check_ndc_in_inventory, 
     export_inventory_to_csv
 )
-from connect_to_database import connect_to_database
+from connect_to_database import connect_to_database, database_exists, create_database
 import random
 from datetime import datetime, timedelta
 import os
+import webbrowser
+import threading
+import time
 
+# Global variables for MySQL credentials, database name, and credential storage
+db_name = None
+mysql_user = None
+mysql_password = None
+credentials_storage = {}  # Initialize the global dictionary for storing credentials
 
+def get_database_credentials():
+    """Prompt the user to provide MySQL credentials and database name."""
+    global db_name, mysql_user, mysql_password
+    
+    # Prompt for MySQL credentials and database name
+    mysql_user = input("Enter MySQL username: ").strip()
+    mysql_password = input("Enter MySQL password: ").strip()
+    db_name = input("Name of Database: ").strip()
 
+    # Check if the database exists
+    if database_exists(mysql_user, mysql_password, db_name):
+        print(f"Database '{db_name}' exists.")
+    else:
+        # Prompt to create a new database if it doesn't exist
+        create_new = input(f"Database '{db_name}' does not exist. Do you want to create a new database? (y/n): ").strip().lower()
+        if create_new == 'y':
+            if create_database(mysql_user, mysql_password, db_name):
+                print(f"Database '{db_name}' created.")
+            else:
+                print("Failed to create the database. Exiting.")
+                exit()
+        else:
+            print("Exiting without creating a database.")
+            exit()
+
+def open_browser():
+    """Open the default web browser for the Flask application."""
+    time.sleep(1)  # Wait for a second to ensure the server is fully started
+    webbrowser.open_new("http://localhost:5000")
+
+# Initialize Flask app
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 
-# Dictionary to store credentials and login information
-credentials_storage = {}
 
 # Generate a random 4-digit number for credentials and calculate expiration time
 def generate_credentials(username, password):
+    global credentials_storage  # Ensure we're modifying the global dictionary
+
     credentials_code = random.randint(1000, 9999)
     expiration_time = datetime.now() + timedelta(hours=24)
     
@@ -41,6 +79,8 @@ def generate_credentials(username, password):
 
 # Remove expired credentials
 def cleanup_expired_credentials():
+    global credentials_storage  # Ensure we're modifying the global dictionary
+
     current_time = datetime.now()
     to_remove = [key for key, value in credentials_storage.items() if value['expires_at'] < current_time]
     
@@ -49,6 +89,8 @@ def cleanup_expired_credentials():
 
 # Verify credentials before making any database connection
 def verify_credentials(entered_credentials):
+    global credentials_storage  # Ensure we're modifying the global dictionary
+
     cleanup_expired_credentials()  # Clean up expired credentials
 
     # Check if entered_credentials is not empty and is numeric
@@ -474,12 +516,6 @@ def download_inventory_csv():
 
 
 
-# View Profit Table Route
-@app.route('/view_profit')
-def view_profit():
-    profit_data = view_profit_table()
-    return render_template('view_profit.html', profit=profit_data)
-
 # Route for managing prescribers (coming soon)
 @app.route('/prescribers')
 def prescribers():
@@ -500,4 +536,11 @@ def sign_off():
     return redirect(url_for('login'))
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Prompt the user for the database credentials before running the app
+    get_database_credentials()
+    
+    # Start a new thread to open the browser
+    threading.Thread(target=open_browser, daemon=True).start()
+
+    # Start the Flask app
+    app.run(debug=True, use_reloader=False)  # Disable reloader to avoid restarting
