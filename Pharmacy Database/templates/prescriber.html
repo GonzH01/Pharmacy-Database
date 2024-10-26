@@ -7,19 +7,63 @@
     <style>
         body {
             font-family: Arial, sans-serif;
+            margin: 20px;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
-            height: 100vh;
-            margin: 0;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #f0f0f0;
         }
+
         h1 {
-            font-size: 48px;
-            color: #4CAF50;
+            font-size: 32px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        p {
+            font-size: 18px;
+            margin-bottom: 40px;
+            color: #666;
+        }
+
+        .button {
+            padding: 12px 24px;
+            font-size: 18px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .button:hover {
+            background-color: #45a049;
+        }
+
+        .button-group {
+            margin-top: 20px;
+        }
+
+        .cancel-button {
+            background-color: #f44336;
+        }
+
+        .cancel-button:hover {
+            background-color: #d32f2f;
         }
     </style>
 </head>
 <body>
-    <h1>Coming Soon</h1>
+    <h1>Manage Prescribers</h1>
+    <p>Coming Soon! This page will allow you to manage prescribers.</p>
+
+    <!-- Back to Main Menu -->
+    <div class="button-group">
+        <a href="{{ url_for('main_menu', from_management=True) }}" class="button cancel-button">Back to Main Menu</a>
+    </div>
 </body>
 </html>
