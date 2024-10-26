@@ -35,7 +35,7 @@ The **Pharmacy Database Management System** is a web-based application built wit
 
 1. **Clone the repository:**
 
-   "git clone https://github.com/yourusername/pharmacy-database.git"
+   "git clone https://github.com/GonzH01/pharmacy-database.git"
    "cd pharmacy-database"
 
 2. **Set up a virtual environment:**
