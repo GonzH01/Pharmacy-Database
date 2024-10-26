@@ -1,18 +1,21 @@
-from flask import Flask, render_template, request, redirect, jsonify, url_for, flash, send_file, make_response
-from scripts.patient_m import create_patient_profile, search_patients, get_patient_profile
+from flask import Flask, render_template, request, redirect, jsonify, url_for, flash, make_response
+from scripts.patient_m import (
+    create_patient_profile, 
+    search_patients, 
+    get_patient_profile
+)
 from scripts.inventory_m import (
     create_tables_and_input_data, 
     view_inventory_table, 
     update_balance, 
     get_drug_by_ndc, 
     check_ndc_in_inventory, 
-    export_inventory_to_csv  # For CSV export functionality
+    export_inventory_to_csv
 )
 from connect_to_database import connect_to_database
 import random
 from datetime import datetime, timedelta
-import os  # For file handling
-
+import os
 
 
 
@@ -177,6 +180,7 @@ def view_patient(patient_id):
 
     # Pass enumerate into the template context
     return render_template('view_profile.html', profile=patient_profile, meds=medication_report, age=age, enumerate=enumerate)
+
 
 # Add Rx Route (Displays the form to add a new prescription)
 @app.route('/add_rx/<patient_id>', methods=['GET', 'POST'])

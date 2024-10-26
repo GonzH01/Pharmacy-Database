@@ -101,23 +101,23 @@
         <table>
             <tr>
                 <th>Name</th>
-                <td>{{ profile[3] }} {{ profile[4] }}</td> <!-- first_name + last_name -->
+                <td>{{ profile[1] }} {{ profile[2] }}</td> <!-- first_name + last_name -->
                 <th>Address</th>
-                <td>{{ profile[5] }}, {{ profile[8] }}, {{ profile[9] }} {{ profile[10] }}</td> <!-- street, city, state, zip_code -->
+                <td>{{ profile[5] }}, {{ profile[6] }}, {{ profile[7] }} {{ profile[8] }}</td> <!-- street, city, state, zip_code -->
                 <th>Date of Birth</th>
                 <td>
-                    {% if profile[6] %}
-                        {{ "{:02d}".format(profile[6] % 10000 // 100) }}/{{ "{:02d}".format(profile[6] % 100) }}/{{ profile[6] // 10000 }}
+                    {% if profile[3] %}
+                        {{ "{:02d}".format(profile[3] % 10000 // 100) }}/{{ "{:02d}".format(profile[3] % 100) }}/{{ profile[3] // 10000 }}
                     {% endif %}
                 </td> <!-- MM/DD/YYYY format -->
                 <th>Delivery Preference</th>
-                <td>{{ profile[2] }}</td> <!-- delivery -->
+                <td>{{ profile[9] }}</td> <!-- delivery -->
                 <th>Gender</th>
-                <td>{{ profile[1] }}</td> <!-- gender -->
+                <td>{{ profile[4] }}</td> <!-- gender -->
                 <th>Phone Number</th>
                 <td>
-                    {% if profile[7] %}
-                        ({{ profile[7] // 10000000 }}) {{ "{:03d}".format(profile[7] % 10000000 // 10000) }}-{{ "{:04d}".format(profile[7] % 10000) }}
+                    {% if profile[10] %}
+                        ({{ profile[10] // 10000000 }}) {{ "{:03d}".format(profile[10] % 10000000 // 10000) }}-{{ "{:04d}".format(profile[10] % 10000) }}
                     {% endif %}
                 </td> <!-- (###) ###-#### format -->
             </tr>
@@ -140,13 +140,13 @@
             {% for index, med in enumerate(meds, start=1) %}
             <tr>
                 <td>{{ index }}</td> <!-- Index for each medication -->
-                <td>{{ med[3] }}</td> <!-- Drug Name -->
+                <td>{{ med[2] }}</td> <!-- Drug Name -->
                 <td>{{ med[10] }}</td> <!-- Directions (sig) -->
-                <td>{{ med[6] }}</td> <!-- Refills -->
-                <td>{{ med[4] }}</td> <!-- Quantity -->
-                <td>{{ med[5] }}</td> <!-- Days Supply -->
+                <td>{{ med[5] }}</td> <!-- Refills -->
+                <td>{{ med[3] }}</td> <!-- Quantity -->
+                <td>{{ med[4] }}</td> <!-- Days Supply -->
                 <td>{{ med[9] }}</td> <!-- Date Filled -->
-                <td>{{ med[8] }}</td> <!-- Expiration Date -->
+                <td>{{ med[7] }}</td> <!-- Expiration Date -->
             </tr>
             {% endfor %}
         </table>

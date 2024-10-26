@@ -6,13 +6,14 @@ from datetime import datetime
 def calculate_age(dob):
     """Calculate age from dob (YYYYMMDD format)"""
     try:
-        dob_str = str(dob)
+        dob = int(dob)  # Ensure dob is an integer
+        dob_str = f"{dob:08d}"  # Pad dob to 8 digits if needed
         birth_date = datetime.strptime(dob_str, '%Y%m%d')
         today = datetime.today()
         age = today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
         return age
-    except ValueError:
-        # Return None if the dob is invalid
+    except (ValueError, TypeError):
+        # Return None if the dob is invalid or not properly formatted
         return None
 
 def create_patient_profile(username, password, first_name, last_name, dob, gender, street, city, state, zip_code, delivery, phone, allergies, conditions):
@@ -52,7 +53,7 @@ def create_patient_profile(username, password, first_name, last_name, dob, gende
     val = (patient_ID, first_name, last_name, dob, gender, street, city, state, zip_code, delivery, phone, allergies, conditions)
     mycursor.execute(sql, val)
 
-    # Create the meds table if it doesn't exist, including the new sig column
+    # Create the meds table if it doesn't exist, including the sig column
     mycursor.execute("""
         CREATE TABLE IF NOT EXISTS meds (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -133,8 +134,8 @@ def get_patient_profile(username, password, patient_id):
     mycursor.execute("SELECT * FROM meds WHERE patient_ID = %s", (patient_id,))
     meds = mycursor.fetchall()
 
-    # Calculate age based on the dob (assuming dob is in profile[6])
-    dob = profile[6]  # Assuming dob is in profile[6]
+    # Calculate age based on the dob (assuming dob is in profile[3])
+    dob = profile[3]  # Assuming dob is in profile[3]
     age = calculate_age(dob)
 
     return profile, meds, age
