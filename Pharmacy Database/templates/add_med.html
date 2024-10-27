@@ -72,11 +72,6 @@
             background-color: #d32f2f;
         }
 
-        .flash-messages {
-            color: red;
-            margin-bottom: 20px;
-        }
-
         .button-group {
             display: flex;
             justify-content: space-between;
@@ -130,19 +125,6 @@
 </head>
 <body>
     <h1>Add New Medication</h1>
-
-    <!-- Flash messages for feedback -->
-    {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            <div class="flash-messages">
-                <ul>
-                    {% for message in messages %}
-                        <li>{{ message }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-        {% endif %}
-    {% endwith %}
 
     <form method="POST" action="{{ url_for('add_med') }}">
         <!-- NDC Number input with credentials -->

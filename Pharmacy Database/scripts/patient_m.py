@@ -13,28 +13,26 @@ def calculate_age(dob):
         age = today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
         return age
     except (ValueError, TypeError):
-        # Return None if the dob is invalid or not properly formatted
-        return None
+        return None  # Return None if dob is invalid
 
-def create_patient_profile(username, password, first_name, last_name, dob, gender, street, city, state, zip_code, delivery, phone, allergies, conditions):
+def create_patient_profile(username, password, db_name, first_name, last_name, dob, gender, street, city, state, zip_code, delivery, phone, allergies, conditions):
     """Create a new patient profile and ensure the meds table exists"""
-    mydb = connect_to_database(username, password)
+    mydb = connect_to_database(username, password, db_name)
     if not mydb:
         return "Error connecting to the database."
 
     patient_ID = str(random.randint(10000, 99999))
-
     mycursor = mydb.cursor()
 
     # Create the patients table if it doesn't exist
-    mycursor.execute("""
+    mycursor.execute(f"""
         CREATE TABLE IF NOT EXISTS patients (
             patient_ID VARCHAR(5) PRIMARY KEY,
             first_name VARCHAR(15),
             last_name VARCHAR(15),
             dob INT(8),
             gender VARCHAR(5),
-            street VARCHAR(15),
+            street VARCHAR(30),
             city VARCHAR(10),
             state VARCHAR(2),
             zip_code INT(5),
@@ -54,7 +52,7 @@ def create_patient_profile(username, password, first_name, last_name, dob, gende
     mycursor.execute(sql, val)
 
     # Create the meds table if it doesn't exist, including the sig column
-    mycursor.execute("""
+    mycursor.execute(f"""
         CREATE TABLE IF NOT EXISTS meds (
             id INT AUTO_INCREMENT PRIMARY KEY,
             patient_ID VARCHAR(5),
@@ -72,12 +70,11 @@ def create_patient_profile(username, password, first_name, last_name, dob, gende
     """)
 
     mydb.commit()
-
     return f"Patient {first_name} {last_name} has been added successfully and meds table is ready."
 
-def search_patients(username, password, name=None, dob=None, phone=None):
+def search_patients(username, password, db_name, name=None, dob=None, phone=None):
     """Search patients based on name, dob, or phone number"""
-    mydb = connect_to_database(username, password)
+    mydb = connect_to_database(username, password, db_name)
     if not mydb:
         return "Error connecting to the database."
 
@@ -99,12 +96,10 @@ def search_patients(username, password, name=None, dob=None, phone=None):
         else:
             return "Error: Please enter name in 'Last, First' format."
 
-    # DOB search logic: Expecting a correctly formatted YYYYMMDD integer
     if dob:
         query += " AND dob = %s"
         values.append(dob)
 
-    # Phone number search logic
     if phone:
         query += " AND pt_phonenumber = %s"
         values.append(phone)
@@ -114,9 +109,9 @@ def search_patients(username, password, name=None, dob=None, phone=None):
 
     return result
 
-def get_patient_profile(username, password, patient_id):
+def get_patient_profile(username, password, db_name, patient_id):
     """Retrieve patient details and medication report"""
-    mydb = connect_to_database(username, password)
+    mydb = connect_to_database(username, password, db_name)
     if not mydb:
         return "Error connecting to the database.", None, None
 
@@ -126,15 +121,13 @@ def get_patient_profile(username, password, patient_id):
     mycursor.execute("SELECT * FROM patients WHERE patient_ID = %s", (patient_id,))
     profile = mycursor.fetchone()
 
-    # Check if the profile exists
     if not profile:
         return "Patient not found.", None, None
 
-    # Fetch patient medication report (assuming meds table exists)
+    # Fetch patient medication report
     mycursor.execute("SELECT * FROM meds WHERE patient_ID = %s", (patient_id,))
     meds = mycursor.fetchall()
 
-    # Calculate age based on the dob (assuming dob is in profile[3])
     dob = profile[3]  # Assuming dob is in profile[3]
     age = calculate_age(dob)
 

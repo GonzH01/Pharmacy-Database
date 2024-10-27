@@ -12,7 +12,7 @@ from scripts.inventory_m import (
     check_ndc_in_inventory, 
     export_inventory_to_csv
 )
-from connect_to_database import connect_to_database, database_exists, create_database
+from connect_to_database import connect_to_database, database_exists, create_database, selected_database
 import random
 from datetime import datetime, timedelta
 import os
@@ -28,7 +28,7 @@ credentials_storage = {}  # Initialize the global dictionary for storing credent
 
 def get_database_credentials():
     """Prompt the user to provide MySQL credentials and database name."""
-    global db_name, mysql_user, mysql_password
+    global db_name, mysql_user, mysql_password, selected_database
     
     # Prompt for MySQL credentials and database name
     mysql_user = input("Enter MySQL username: ").strip()
@@ -38,12 +38,16 @@ def get_database_credentials():
     # Check if the database exists
     if database_exists(mysql_user, mysql_password, db_name):
         print(f"Database '{db_name}' exists.")
+        selected_database = db_name  # Save the database name
+        open_browser()
     else:
         # Prompt to create a new database if it doesn't exist
         create_new = input(f"Database '{db_name}' does not exist. Do you want to create a new database? (y/n): ").strip().lower()
         if create_new == 'y':
             if create_database(mysql_user, mysql_password, db_name):
                 print(f"Database '{db_name}' created.")
+                selected_database = db_name  # Save the database name
+                open_browser()
             else:
                 print("Failed to create the database. Exiting.")
                 exit()

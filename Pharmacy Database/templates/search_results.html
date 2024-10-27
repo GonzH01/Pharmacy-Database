@@ -34,6 +34,20 @@
         .button:hover {
             background-color: #45a049;
         }
+        .back-to-main {
+            background-color: #90CAF9; /* Blue color for the Back to Main Menu button */
+            color: white;
+        }
+        .back-to-main:hover {
+            background-color: #64B5F6; /* Darker shade of blue on hover */
+        }
+        .back-to-search {
+            background-color: #feff3f; /* Set to the requested color */
+            color: black;
+        }
+        .back-to-search:hover {
+            background-color: #E0E0A3; /* Slightly darker shade on hover */
+        }
         .right-button {
             float: right;
         }
@@ -81,12 +95,12 @@
 
         <!-- Back to Search -->
         <a href="{{ url_for('patients') }}">
-            <button class="button">Back to Search</button>
+            <button class="button back-to-search">Back to Search</button>
         </a>
 
         <!-- Back to Main Menu -->
         <a href="{{ url_for('main_menu') }}">
-            <button class="button right-button">Back to Main Menu</button>
+            <button class="button back-to-main right-button">Back to Main Menu</button>
         </a>
     </div>
 </body>

@@ -40,8 +40,20 @@
         .button:hover {
             background-color: #45a049;
         }
-        .right-button {
-            float: right;
+        .cancel-button {
+            background-color: #f44336;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            display: inline-block;
+            font-size: 16px;
+            margin-top: 10px;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+        .cancel-button:hover {
+            background-color: #d32f2f;
         }
     </style>
     <script>
@@ -92,8 +104,8 @@
                 <option value="F">Female</option>
             </select>
 
-            <label for="street">Street: (Max 15 characters)</label>
-            <input type="text" id="street" name="street" maxlength="15" required placeholder="Enter Street Address">
+            <label for="street">Street: (Max 30 characters)</label>
+            <input type="text" id="street" name="street" maxlength="30" required placeholder="Enter Street Address">
 
             <label for="zip_code">ZIP Code:</label>
             <input type="text" id="zip_code" name="zip_code" required pattern="\d{5}" placeholder="Enter ZIP Code" oninput="autoFillCityState()">
@@ -131,9 +143,7 @@
         </form>
 
         <!-- Cancel Button -->
-        <a href="{{ url_for('patients') }}">
-            <button class="button right-button">Cancel</button>
-        </a>
+        <a href="{{ url_for('patients') }}" class="cancel-button">Cancel</a>
     </div>
 </body>
 </html>

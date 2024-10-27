@@ -42,6 +42,21 @@
         .button:hover {
             background-color: #45a049;
         }
+        .exit-button {
+            background-color: #f44336; /* Red background for Exit button */
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            display: inline-block;
+            font-size: 16px;
+            margin: 10px 2px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+        }
+        .exit-button:hover {
+            background-color: #d32f2f; /* Darker shade of red on hover */
+        }
         .right-button {
             float: right;
         }
@@ -145,7 +160,7 @@
                 <td>{{ med[5] }}</td> <!-- Refills -->
                 <td>{{ med[3] }}</td> <!-- Quantity -->
                 <td>{{ med[4] }}</td> <!-- Days Supply -->
-                <td>{{ med[9] }}</td> <!-- Date Filled -->
+                <td>{{ med[8] }}</td> <!-- Date Filled -->
                 <td>{{ med[7] }}</td> <!-- Expiration Date -->
             </tr>
             {% endfor %}
@@ -158,7 +173,7 @@
         <div class="pagination-buttons">
             <!-- Exit button on the left -->
             <a href="{{ url_for('patients') }}">
-                <button class="button left-button">Exit</button>
+                <button class="exit-button left-button">Exit</button>
             </a>
 
             <!-- Previous button -->

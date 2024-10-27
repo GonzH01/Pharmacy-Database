@@ -39,6 +39,21 @@
         .right-button {
             float: right;
         }
+        .cancel-button {
+            background-color: #f44336; /* Red background for Cancel button */
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            display: inline-block;
+            font-size: 16px;
+            margin: 10px 2px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+        }
+        .cancel-button:hover {
+            background-color: #d32f2f; /* Darker shade of red on hover */
+        }
         /* Grey out the NDC input field */
         input[readonly] {
             background-color: #e9ecef;
@@ -85,7 +100,7 @@
 
         <!-- Cancel Button -->
         <a href="{{ url_for('view_patient', patient_id=patient_id) }}">
-            <button class="button right-button">Cancel</button>
+            <button class="cancel-button right-button">Cancel</button>
         </a>
     </div>
 </body>
