@@ -1,19 +1,17 @@
 import mysql.connector
 from connect_to_database import connect_to_database
 import random
-from datetime import datetime
+from datetime import datetime, date
+
 
 def calculate_age(dob):
-    """Calculate age from dob (YYYYMMDD format)"""
-    try:
-        dob = int(dob)  # Ensure dob is an integer
-        dob_str = f"{dob:08d}"  # Pad dob to 8 digits if needed
-        birth_date = datetime.strptime(dob_str, '%Y%m%d')
-        today = datetime.today()
-        age = today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
+    """Calculate age from dob (datetime.date format)"""
+    if isinstance(dob, date):
+        today = datetime.today().date()
+        age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
         return age
-    except (ValueError, TypeError):
-        return None  # Return None if dob is invalid
+    return "N/A"
+
 
 def create_patient_profile(username, password, db_name, first_name, last_name, dob, gender, street, city, state, zip_code, delivery, phone, allergies, conditions):
     """Create a new patient profile and ensure the meds table exists"""
@@ -30,14 +28,14 @@ def create_patient_profile(username, password, db_name, first_name, last_name, d
             patient_ID VARCHAR(5) PRIMARY KEY,
             first_name VARCHAR(15),
             last_name VARCHAR(15),
-            dob INT(8),
+            dob DATE,
             gender VARCHAR(5),
             street VARCHAR(30),
             city VARCHAR(10),
             state VARCHAR(2),
-            zip_code INT(5),
+            zip_code INT,
             delivery VARCHAR(3),
-            pt_phonenumber BIGINT(10),
+            pt_phonenumber BIGINT,
             allergies TEXT,
             conditions TEXT
         )
@@ -110,7 +108,6 @@ def search_patients(username, password, db_name, name=None, dob=None, phone=None
     return result
 
 def get_patient_profile(username, password, db_name, patient_id):
-    """Retrieve patient details and medication report"""
     mydb = connect_to_database(username, password, db_name)
     if not mydb:
         return "Error connecting to the database.", None, None
@@ -124,11 +121,15 @@ def get_patient_profile(username, password, db_name, patient_id):
     if not profile:
         return "Patient not found.", None, None
 
+    # Assuming dob is the 4th column in the 'profile'
+    dob = profile[3]
+
+    # Calculate age if dob is not None
+    age = calculate_age(dob) if dob else "N/A"
+
     # Fetch patient medication report
     mycursor.execute("SELECT * FROM meds WHERE patient_ID = %s", (patient_id,))
     meds = mycursor.fetchall()
 
-    dob = profile[3]  # Assuming dob is in profile[3]
-    age = calculate_age(dob)
-
     return profile, meds, age
+

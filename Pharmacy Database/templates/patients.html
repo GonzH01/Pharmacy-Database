@@ -57,18 +57,8 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 10px;
+            gap: 10px; /* Adds space between buttons */
             margin-top: 20px;
-        }
-        /* Image styling */
-        .background-image {
-            position: fixed;
-            bottom: 10px;
-            right: 10px;
-            width: 340px; /* 200px increased by 70% */
-            opacity: 0.3;
-            transform: rotate(10deg); /* Tilt to the right */
-            z-index: -1;
         }
     </style>
     <script>
@@ -130,8 +120,5 @@
             <a href="{{ url_for('main_menu') }}" class="button cancel-button">Back to Main Menu</a>
         </div>
     </div>
-
-    <!-- Background image -->
-    <img src="{{ url_for('static', filename='rb_2147610053.png') }}" alt="Background" class="background-image">
 </body>
 </html>

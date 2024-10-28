@@ -26,34 +26,37 @@ mysql_user = None
 mysql_password = None
 credentials_storage = {}  # Initialize the global dictionary for storing credentials
 
+def selected_database():
+    """Return the currently selected database name."""
+    global db_name
+    return db_name
+
 def get_database_credentials():
-    """Prompt the user to provide MySQL credentials and database name."""
-    global db_name, mysql_user, mysql_password, selected_database
-    
+    global db_name, mysql_user, mysql_password
+
     # Prompt for MySQL credentials and database name
     mysql_user = input("Enter MySQL username: ").strip()
     mysql_password = input("Enter MySQL password: ").strip()
     db_name = input("Name of Database: ").strip()
 
-    # Check if the database exists
     if database_exists(mysql_user, mysql_password, db_name):
         print(f"Database '{db_name}' exists.")
-        selected_database = db_name  # Save the database name
-        open_browser()
+        credentials_code, expiration_time = generate_credentials(mysql_user, mysql_password, db_name)
     else:
-        # Prompt to create a new database if it doesn't exist
         create_new = input(f"Database '{db_name}' does not exist. Do you want to create a new database? (y/n): ").strip().lower()
         if create_new == 'y':
             if create_database(mysql_user, mysql_password, db_name):
                 print(f"Database '{db_name}' created.")
-                selected_database = db_name  # Save the database name
-                open_browser()
+                credentials_code, expiration_time = generate_credentials(mysql_user, mysql_password, db_name)
             else:
                 print("Failed to create the database. Exiting.")
                 exit()
         else:
             print("Exiting without creating a database.")
             exit()
+
+    open_browser()
+
 
 def open_browser():
     """Open the default web browser for the Flask application."""
@@ -65,21 +68,24 @@ app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 
 
-# Generate a random 4-digit number for credentials and calculate expiration time
-def generate_credentials(username, password):
+def generate_credentials(username, password, db_name):
     global credentials_storage  # Ensure we're modifying the global dictionary
 
     credentials_code = random.randint(1000, 9999)
     expiration_time = datetime.now() + timedelta(hours=24)
-    
-    # Store credentials with expiration time
+
+    # Store credentials with expiration time and db_name
     credentials_storage[credentials_code] = {
         'username': username,
         'password': password,
+        'db_name': db_name,  # Include db_name
         'expires_at': expiration_time
     }
-    
+
     return credentials_code, expiration_time
+
+
+
 
 # Remove expired credentials
 def cleanup_expired_credentials():
@@ -91,18 +97,16 @@ def cleanup_expired_credentials():
     for key in to_remove:
         del credentials_storage[key]
 
-# Verify credentials before making any database connection
 def verify_credentials(entered_credentials):
-    global credentials_storage  # Ensure we're modifying the global dictionary
+    # Fetch the stored credentials based on the entered ones
+    user_info = credentials_storage.get(int(entered_credentials))  # Ensure it's converted to int
 
-    cleanup_expired_credentials()  # Clean up expired credentials
+    if user_info and 'db_name' not in user_info:
+        user_info['db_name'] = selected_database()  # Correctly call selected_database()
 
-    # Check if entered_credentials is not empty and is numeric
-    if entered_credentials and entered_credentials.isdigit():
-        return credentials_storage.get(int(entered_credentials))
-    return None
+    return user_info
 
-# Login Route
+
 @app.route('/', methods=['GET', 'POST'])
 def login():
     cleanup_expired_credentials()  # Clean up expired credentials on login
@@ -115,8 +119,7 @@ def login():
         # Try connecting to the database
         mydb = connect_to_database(username, password)
         if mydb:  # Successful connection
-            credentials_code, expiration_time = generate_credentials(username, password)
-            # Flash the credentials message with a different category (not "login")
+            credentials_code, expiration_time = generate_credentials(username, password, selected_database())  # Include db_name here
             flash(f"Your credentials are {credentials_code}. Expires in 24 hours: {expiration_time.strftime('%Y-%m-%d %I:%M:%S %p')}", category="credentials")
             return redirect(url_for('main_menu', credentials_code=credentials_code))  # Redirect to main menu with credentials
         else:
@@ -139,95 +142,114 @@ def main_menu():
     
     return render_template('index.html', credentials_code=None)
 
-# Add New Patient Route (Displays the form to add a new patient)
 @app.route('/add_patient', methods=['GET', 'POST'])
 def add_patient():
     if request.method == 'POST':
         # Get form data
-        first_name = request.form['first_name']
-        last_name = request.form['last_name']
+        first_name = request.form.get('first_name')
+        last_name = request.form.get('last_name')
         
-        # Concatenate separate DOB fields
-        dob_month = request.form['dob_month']
-        dob_day = request.form['dob_day']
-        dob_year = request.form['dob_year']
-        dob = f"{dob_year}{dob_month.zfill(2)}{dob_day.zfill(2)}"  # Format as YYYYMMDD
-        
-        gender = request.form['gender']
-        street = request.form['street']
-        zip_code = request.form['zip_code']
-        city = request.form['city']
-        state = request.form['state']
-        delivery = request.form['delivery']
-        
-        # Concatenate separate phone number fields
-        phone_area = request.form['phone_area']
-        phone_central = request.form['phone_central']
-        phone_line = request.form['phone_line']
+        # Extract the separate DOB fields and combine them to form the full date of birth
+        dob_month = request.form.get('dob_month')
+        dob_day = request.form.get('dob_day')
+        dob_year = request.form.get('dob_year')
+        dob = f"{dob_year}-{dob_month.zfill(2)}-{dob_day.zfill(2)}"  # Format as YYYY-MM-DD
+
+        gender = request.form.get('gender')
+        street = request.form.get('street')
+        city = request.form.get('city')
+        state = request.form.get('state')
+        zip_code = request.form.get('zip_code')
+        delivery = request.form.get('delivery')
+
+        # Combine phone number fields
+        phone_area = request.form.get('phone_area')
+        phone_central = request.form.get('phone_central')
+        phone_line = request.form.get('phone_line')
         phone = f"{phone_area}{phone_central}{phone_line}"
 
-        allergies = request.form['allergies']
-        conditions = request.form['conditions']
+        allergies = request.form.get('allergies', 'None')  # Use 'None' if no allergies are provided
+        conditions = request.form.get('conditions', 'None')  # Use 'None' if no conditions are provided
 
-        entered_credentials = request.form['credentials']
-
-        # Verify the credentials before accessing the database
+        # Get credentials entered by the user
+        entered_credentials = request.form.get('credentials')
         user_info = verify_credentials(entered_credentials)
-        if not user_info:
-            flash("Invalid or expired credentials. Please log in again.")
+
+        # Ensure valid credentials
+        if not user_info or 'db_name' not in user_info:
+            flash("Invalid credentials or database not selected. Please try again.")
             return redirect(url_for('patients'))
 
-        # Insert the new patient using the saved username and password
-        result = create_patient_profile(user_info['username'], user_info['password'], first_name, last_name, dob, gender, street, city, state, zip_code, delivery, phone, allergies, conditions)
+        # Call the create_patient_profile function with all required arguments
+        result = create_patient_profile(
+            user_info['username'],
+            user_info['password'],
+            user_info['db_name'],  # Pass db_name
+            first_name,
+            last_name,
+            dob,
+            gender,
+            street,
+            city,
+            state,
+            zip_code,
+            delivery,
+            phone,
+            allergies,
+            conditions
+        )
+
         flash(result)
-        return redirect(url_for('patients'))  # Redirect back to the patient management screen
-    
-    return render_template('add_patient.html')
-
-# Search for a Patient Route
-@app.route('/search_patient', methods=['POST'])
-def search_patient():
-    # Get form data
-    name = request.form['name']
-    dob = request.form['dob']
-    phone = request.form['phone']
-    entered_credentials = request.form['credentials']
-
-    # Verify the credentials before accessing the database
-    user_info = verify_credentials(entered_credentials)
-    if not user_info:
-        flash("Invalid or expired credentials. Please try again.")
         return redirect(url_for('patients'))
 
-    # Perform the search in the database using valid credentials
-    matching_patients = search_patients(user_info['username'], user_info['password'], name, dob, phone)
+    return render_template('add_patient.html')
+
+
+
+@app.route('/search_patient', methods=['POST'])
+def search_patient():
+    name = request.form.get('name', None)
+    dob = request.form.get('dob', None)
+    phone = request.form.get('phone', None)
+    entered_credentials = request.form['credentials']
+
+    user_info = verify_credentials(entered_credentials)
+    if not user_info or 'db_name' not in user_info:
+        flash("Invalid or expired credentials, or no database selected. Please log in again.")
+        return redirect(url_for('patients'))
+
+    matching_patients = search_patients(
+        user_info['username'],
+        user_info['password'],
+        user_info['db_name'],  # Pass db_name for database connection
+        name=name,
+        dob=dob,
+        phone=phone
+    )
 
     return render_template('search_results.html', patients=matching_patients)
 
-# View Patient Profile Route
+
+
 @app.route('/view_patient/<patient_id>', methods=['GET', 'POST'])
 def view_patient(patient_id):
     if request.method == 'POST':
         entered_credentials = request.form['credentials']
-
-        # Verify the credentials before accessing the database
         user_info = verify_credentials(entered_credentials)
         if not user_info:
             flash("Invalid or expired credentials. Please try again.")
             return redirect(url_for('patients'))
     else:
-        # For GET requests, we bypass credential verification
-        user_info = credentials_storage.get(list(credentials_storage.keys())[0])  # Grabbing stored credentials
+        user_info = credentials_storage.get(list(credentials_storage.keys())[0])
 
     if not user_info:
         flash("Could not retrieve credentials. Please log in again.")
         return redirect(url_for('login'))
 
-    # Fetch the patient profile and their medication report, along with age
-    patient_profile, medication_report, age = get_patient_profile(user_info['username'], user_info['password'], patient_id)
+    # Fetch the patient profile and medication report
+    patient_profile, medication_report, age = get_patient_profile(user_info['username'], user_info['password'], user_info['db_name'], patient_id)
 
-    # Pass enumerate into the template context
-    return render_template('view_profile.html', profile=patient_profile, meds=medication_report, age=age, enumerate=enumerate)
+    return render_template('view_profile.html', profile=patient_profile, meds=medication_report, age=age)
 
 
 # Add Rx Route (Displays the form to add a new prescription)

@@ -34,19 +34,19 @@
         .button:hover {
             background-color: #45a049;
         }
-        .back-to-main {
-            background-color: #90CAF9; /* Blue color for the Back to Main Menu button */
+        .cancel-button {
+            background-color: #90CAF9;
             color: white;
         }
-        .back-to-main:hover {
-            background-color: #64B5F6; /* Darker shade of blue on hover */
+        .cancel-button:hover {
+            background-color: #64B5F6;
         }
-        .back-to-search {
-            background-color: #feff3f; /* Set to the requested color */
+        .back-button {
+            background-color: #FEFEC1;
             color: black;
         }
-        .back-to-search:hover {
-            background-color: #E0E0A3; /* Slightly darker shade on hover */
+        .back-button:hover {
+            background-color: #EFEFA1;
         }
         .right-button {
             float: right;
@@ -74,8 +74,12 @@
                 <td>{{ patient[0] }}</td>
                 <td>{{ patient[2] }}</td>
                 <td>{{ patient[1] }}</td>
-                <!-- Format DOB as MM/DD/YYYY -->
-                <td>{{ "{:02d}".format(patient[3] % 10000 // 100) }}/{{ "{:02d}".format(patient[3] % 100) }}/{{ patient[3] // 10000 }}</td>
+                <!-- Format DOB from 'YYYY-MM-DD' to 'MM/DD/YYYY' -->
+                <td>
+                    {% if patient[3] %}
+                        {{ patient[3].strftime('%m/%d/%Y') }}
+                    {% endif %}
+                </td>
                 <td>{{ patient[4] }}</td>
                 <td>{{ patient[5] if patient[5] else 'N/A' }}</td> <!-- Street -->
                 <td>{{ patient[6] if patient[6] else 'N/A' }}</td> <!-- City -->
@@ -95,12 +99,12 @@
 
         <!-- Back to Search -->
         <a href="{{ url_for('patients') }}">
-            <button class="button back-to-search">Back to Search</button>
+            <button class="button back-button">Back to Search</button>
         </a>
 
         <!-- Back to Main Menu -->
         <a href="{{ url_for('main_menu') }}">
-            <button class="button back-to-main right-button">Back to Main Menu</button>
+            <button class="button cancel-button right-button">Back to Main Menu</button>
         </a>
     </div>
 </body>
