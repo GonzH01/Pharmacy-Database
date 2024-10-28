@@ -7,53 +7,79 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-        }
-        .container {
             margin: 20px;
+            background-color: #f9f9f9;
         }
+
+        form {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            background-color: #fff;
+        }
+
         label {
             display: block;
-            margin: 10px 0 5px;
+            margin-bottom: 8px;
+            font-weight: bold;
         }
-        input {
-            padding: 10px;
-            font-size: 16px;
+
+        input, select {
             width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
             box-sizing: border-box;
         }
+
         .phone-input {
             width: 30%;
             display: inline-block;
         }
+
+        .dob-input {
+            width: 32%;
+            display: inline-block;
+        }
+
         .button {
+            width: 48%;
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            border: none;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .submit-button {
             background-color: #4CAF50;
             color: white;
-            padding: 10px 20px;
-            text-align: center;
-            display: inline-block;
-            font-size: 16px;
-            margin: 10px 2px;
-            cursor: pointer;
-            border: none;
-            border-radius: 5px;
         }
-        .button:hover {
+
+        .submit-button:hover {
             background-color: #45a049;
         }
+
         .cancel-button {
             background-color: #f44336;
             color: white;
-            padding: 10px 20px;
-            text-align: center;
-            display: inline-block;
-            font-size: 16px;
-            margin-top: 10px;
-            border: none;
-            border-radius: 5px;
             text-decoration: none;
+            display: inline-block;
+            text-align: center;
         }
+
         .cancel-button:hover {
             background-color: #d32f2f;
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: space-between;
         }
     </style>
     <script>
@@ -83,67 +109,70 @@
     </script>
 </head>
 <body>
-    <div class="container">
-        <h1>Add New Patient</h1>
-        <form method="POST" action="{{ url_for('add_patient') }}">
-            <label for="first_name">First Name: (Max 15 characters)</label>
-            <input type="text" id="first_name" name="first_name" maxlength="15" required placeholder="Enter First Name">
+    <h1 style="text-align: center;">Add New Patient</h1>
 
-            <label for="last_name">Last Name: (Max 15 characters)</label>
-            <input type="text" id="last_name" name="last_name" maxlength="15" required placeholder="Enter Last Name">
+    <form method="POST" action="{{ url_for('add_patient') }}">
+        <label for="first_name">First Name: (Max 15 characters)</label>
+        <input type="text" id="first_name" name="first_name" maxlength="15" required placeholder="Enter First Name">
 
-            <!-- DOB as three separate fields -->
-            <label for="dob">DOB: (MM-DD-YYYY)</label>
-            <input type="text" id="dob_month" name="dob_month" maxlength="2" required placeholder="MM">
-            <input type="text" id="dob_day" name="dob_day" maxlength="2" required placeholder="DD">
-            <input type="text" id="dob_year" name="dob_year" maxlength="4" required placeholder="YYYY">
+        <label for="last_name">Last Name: (Max 15 characters)</label>
+        <input type="text" id="last_name" name="last_name" maxlength="15" required placeholder="Enter Last Name">
 
-            <label for="gender">Gender:</label>
-            <select id="gender" name="gender" required>
-                <option value="M">Male</option>
-                <option value="F">Female</option>
-            </select>
+        <!-- DOB as three separate fields -->
+        <label for="dob">DOB: (MM-DD-YYYY)</label>
+        <input type="text" id="dob_month" name="dob_month" class="dob-input" maxlength="2" required placeholder="MM">
+        <input type="text" id="dob_day" name="dob_day" class="dob-input" maxlength="2" required placeholder="DD">
+        <input type="text" id="dob_year" name="dob_year" class="dob-input" maxlength="4" required placeholder="YYYY">
 
-            <label for="street">Street: (Max 30 characters)</label>
-            <input type="text" id="street" name="street" maxlength="30" required placeholder="Enter Street Address">
+        <label for="gender">Gender:</label>
+        <select id="gender" name="gender" required>
+            <option value="">Select</option>
+            <option value="M">Male</option>
+            <option value="F">Female</option>
+        </select>
 
-            <label for="zip_code">ZIP Code:</label>
-            <input type="text" id="zip_code" name="zip_code" required pattern="\d{5}" placeholder="Enter ZIP Code" oninput="autoFillCityState()">
+        <label for="street">Street: (Max 30 characters)</label>
+        <input type="text" id="street" name="street" maxlength="30" required placeholder="Enter Street Address">
 
-            <label for="city">City:</label>
-            <input type="text" id="city" name="city" readonly placeholder="City will auto-fill">
+        <label for="zip_code">ZIP Code:</label>
+        <input type="text" id="zip_code" name="zip_code" required pattern="\d{5}" placeholder="Enter ZIP Code" oninput="autoFillCityState()">
 
-            <label for="state">State:</label>
-            <input type="text" id="state" name="state" readonly placeholder="State will auto-fill">
+        <label for="city">City:</label>
+        <input type="text" id="city" name="city" readonly placeholder="City will auto-fill">
 
-            <!-- Phone number as three separate inputs -->
-            <label for="phone">Phone Number: (###-###-####)</label>
-            <input type="text" id="phone_area" name="phone_area" class="phone-input" maxlength="3" required placeholder="###">
-            <input type="text" id="phone_central" name="phone_central" class="phone-input" maxlength="3" required placeholder="###">
-            <input type="text" id="phone_line" name="phone_line" class="phone-input" maxlength="4" required placeholder="####">
+        <label for="state">State:</label>
+        <input type="text" id="state" name="state" readonly placeholder="State will auto-fill">
 
-            <label for="delivery">Delivery Option (Yes/No):</label>
-            <select id="delivery" name="delivery" required>
-                <option value="Yes">Yes</option>
-                <option value="No">No</option>
-            </select>
+        <!-- Phone number as three separate inputs -->
+        <label for="phone">Phone Number: (###-###-####)</label>
+        <input type="text" id="phone_area" name="phone_area" class="phone-input" maxlength="3" required placeholder="###">
+        <input type="text" id="phone_central" name="phone_central" class="phone-input" maxlength="3" required placeholder="###">
+        <input type="text" id="phone_line" name="phone_line" class="phone-input" maxlength="4" required placeholder="####">
 
-            <!-- New Allergies field -->
-            <label for="allergies">Allergies: (Separate by commas)</label>
-            <input type="text" id="allergies" name="allergies" placeholder="'none' or ex: aspirin,..." required>
+        <label for="delivery">Delivery Option (Yes/No):</label>
+        <select id="delivery" name="delivery" required>
+            <option value="">Select</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+        </select>
 
-            <!-- New Conditions field -->
-            <label for="conditions">Conditions: (Separate by commas)</label>
-            <input type="text" id="conditions" name="conditions" placeholder="'none' or ex: diabetes,..." required>
+        <!-- Allergies field -->
+        <label for="allergies">Allergies: (Separate by commas)</label>
+        <input type="text" id="allergies" name="allergies" placeholder="'none' or ex: aspirin,..." required>
 
-            <label for="credentials">Credentials: (4-Digit Code)</label>
-            <input type="text" id="credentials" name="credentials" required pattern="\d{4}">
+        <!-- Conditions field -->
+        <label for="conditions">Conditions: (Separate by commas)</label>
+        <input type="text" id="conditions" name="conditions" placeholder="'none' or ex: diabetes,..." required>
 
-            <button type="submit" class="button">Add Patient</button>
-        </form>
+        <!-- Credentials entry -->
+        <label for="credentials">Credentials: (4-Digit Code)</label>
+        <input type="text" id="credentials" name="credentials" required pattern="\d{4}" placeholder="Enter 4-Digit Code">
 
-        <!-- Cancel Button -->
-        <a href="{{ url_for('patients') }}" class="cancel-button">Cancel</a>
-    </div>
+        <!-- Submit and Cancel buttons -->
+        <div class="button-group">
+            <button type="submit" class="button submit-button">Add Patient</button>
+            <a href="{{ url_for('patients') }}" class="button cancel-button">Cancel</a>
+        </div>
+    </form>
 </body>
 </html>

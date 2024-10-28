@@ -7,61 +7,109 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-        }
-        .container {
             margin: 20px;
         }
+
+        form {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            background-color: #f9f9f9;
+        }
+
         label {
             display: block;
-            margin: 10px 0 5px;
+            margin-bottom: 8px;
+            font-weight: bold;
         }
+
         input, textarea {
-            padding: 10px;
-            font-size: 16px;
             width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
             box-sizing: border-box;
         }
+
+        .ndc-credentials-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .ndc-credentials-group input {
+            flex: 1;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        #ndc_number {
+            flex: 1.5; /* Further reduced width of the NDC entry bar */
+        }
+
         .button {
+            padding: 8px 12px;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 5px;
+            border: none;
+            text-align: center;
+            margin: 5px 0; /* Space between button and input fields */
+        }
+
+        .submit-button {
             background-color: #4CAF50;
             color: white;
-            padding: 10px 20px;
-            text-align: center;
-            display: inline-block;
-            font-size: 16px;
-            margin: 10px 2px;
-            cursor: pointer;
-            border: none;
-            border-radius: 5px;
         }
-        .button:hover {
+
+        .submit-button:hover {
             background-color: #45a049;
         }
+
+        .add-med-button {
+            background-color: #64B5F6;
+            color: white;
+        }
+
+        .add-med-button:hover {
+            background-color: #5A9BE6;
+        }
+
         .cancel-button {
-            background-color: #f44336; /* Red background for Cancel button */
+            background-color: #f44336;
             color: white;
             text-decoration: none;
             display: inline-block;
-            padding: 10px 20px;
-            font-size: 16px;
-            margin: 10px 2px;
-            cursor: pointer;
-            border: none;
-            border-radius: 5px;
+            text-align: center;
+            margin-top: 10px;
         }
+
         .cancel-button:hover {
-            background-color: #d32f2f; /* Darker shade of red on hover */
+            background-color: #d32f2f;
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+
+        .spacer {
+            margin-top: 20px; /* Extra space between buttons and drug name field */
         }
     </style>
     <script>
-        // Function to auto-fill the date expired based on date written
+        // Function to auto-fill the expiration date based on the written date
         function autoFillDateExpired() {
             const dateWritten = document.getElementById("date_written").value;
             if (dateWritten) {
                 const writtenDate = new Date(dateWritten);
                 const expiredDate = new Date(writtenDate);
-                expiredDate.setFullYear(writtenDate.getFullYear() + 1); // Add 1 year to the date written
+                expiredDate.setFullYear(writtenDate.getFullYear() + 1);
 
-                // Format the date to YYYY-MM-DD
                 const year = expiredDate.getFullYear();
                 const month = ('0' + (expiredDate.getMonth() + 1)).slice(-2);
                 const day = ('0' + expiredDate.getDate()).slice(-2);
@@ -69,47 +117,92 @@
                 document.getElementById("date_expired").value = `${year}-${month}-${day}`;
             }
         }
+
+        // Function to check if the NDC already exists in the database
+        async function checkNDC() {
+            const ndcInput = document.getElementById('ndc_number').value;
+            const credentials = document.getElementById('credentials').value;
+
+            if (ndcInput.length === 11 && credentials.length === 4) {
+                try {
+                    const response = await fetch(`/check_ndc?ndc=${ndcInput}&credentials=${credentials}`, {
+                        method: 'GET'
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+
+                    const data = await response.json();
+
+                    if (data.exists) {
+                        document.getElementById('drug').value = data.drug_name || '';
+                        alert('NDC found! Autofilled medication details.');
+                    } else {
+                        alert('No match found for NDC. Please add the new medication.');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error checking NDC. Please try again.');
+                }
+            } else {
+                alert('Please enter a valid 11-digit NDC and 4-digit credentials.');
+            }
+        }
     </script>
 </head>
 <body>
-    <div class="container">
-        <h1>Add New Prescription</h1>
-        <form method="POST" action="{{ url_for('add_rx', patient_id=patient_id) }}">
-            <label for="ndc_number">NDC Number: (11 digits)</label>
+    <h1>Add New Prescription</h1>
+
+    <form method="POST" action="{{ url_for('add_rx', patient_id=patient_id) }}">
+        <!-- NDC Number and credentials entry -->
+        <div class="ndc-credentials-group">
             <input type="text" id="ndc_number" name="ndc_number" maxlength="11" pattern="\d{11}" required placeholder="Enter 11-digit NDC Number">
+            <input type="text" id="credentials" name="credentials" maxlength="4" pattern="\d{4}" required placeholder="Enter 4-digit Credentials">
+        </div>
 
-            <label for="drug">Drug Name:</label>
-            <input type="text" id="drug" name="drug" maxlength="255" required placeholder="Enter Drug Name">
+        <!-- Check NDC and Add New Med buttons -->
+        <div class="button-group">
+            <button type="button" class="button submit-button" onclick="checkNDC()">Check NDC</button>
+            <a href="{{ url_for('add_med') }}" class="button add-med-button">Add New Med</a>
+        </div>
 
-            <label for="quantity">Quantity:</label>
-            <input type="text" id="quantity" name="quantity" maxlength="6" pattern="\d{1,6}" required placeholder="Enter Quantity">
+        <!-- Spacer to add extra space between buttons and drug name field -->
+        <div class="spacer"></div>
 
-            <label for="days_supply">Days Supply:</label>
-            <input type="text" id="days_supply" name="days_supply" maxlength="6" pattern="\d{1,6}" required placeholder="Enter Days Supply">
+        <label for="drug">Drug Name:</label>
+        <input type="text" id="drug" name="drug" maxlength="255" required>
 
-            <label for="refills">Refills:</label>
-            <input type="text" id="refills" name="refills" maxlength="3" pattern="\d{1,3}" required placeholder="Enter Number of Refills">
+        <label for="quantity">Quantity:</label>
+        <input type="text" id="quantity" name="quantity" maxlength="6" pattern="\d{1,6}" required>
 
-            <label for="date_written">Date Written: (YYYY-MM-DD)</label>
-            <input type="date" id="date_written" name="date_written" required onchange="autoFillDateExpired()">
+        <label for="days_supply">Days Supply:</label>
+        <input type="text" id="days_supply" name="days_supply" maxlength="6" pattern="\d{1,6}" required>
 
-            <label for="date_expired">Date Expired: (Auto-filled)</label>
-            <input type="date" id="date_expired" name="date_expired" readonly>
+        <label for="refills">Refills:</label>
+        <input type="text" id="refills" name="refills" maxlength="3" pattern="\d{1,3}" required>
 
-            <label for="date_filled">Date Filled: (YYYY-MM-DD)</label>
-            <input type="date" id="date_filled" name="date_filled" required>
+        <label for="date_written">Date Written (YYYY-MM-DD):</label>
+        <input type="date" id="date_written" name="date_written" required onchange="autoFillDateExpired()">
 
-            <label for="sig">Directions (Max 150 characters):</label>
-            <textarea id="sig" name="sig" maxlength="150" required placeholder="Enter directions for the medication"></textarea>
+        <label for="date_expired">Date Expired (Auto-filled):</label>
+        <input type="date" id="date_expired" name="date_expired" readonly>
 
-            <label for="credentials">Credentials: (4-Digit Code)</label>
-            <input type="text" id="credentials" name="credentials" required pattern="\d{4}" maxlength="4" placeholder="Enter your credentials">
+        <label for="date_filled">Date Filled (YYYY-MM-DD):</label>
+        <input type="date" id="date_filled" name="date_filled" required>
 
-            <button type="submit" class="button">Add Prescription</button>
-        </form>
+        <label for="sig">Directions (Max 150 characters):</label>
+        <textarea id="sig" name="sig" maxlength="150" required></textarea>
 
-        <!-- Cancel Button -->
-        <a href="{{ url_for('view_patient', patient_id=patient_id) }}" class="cancel-button">Cancel</a>
-    </div>
+        <!-- Credentials input for prescription submission -->
+        <label for="prescription_credentials">Enter 4-Digit Credentials to Add Prescription:</label>
+        <input type="text" id="prescription_credentials" name="prescription_credentials" maxlength="4" pattern="\d{4}" required>
+
+        <!-- Submit and Cancel buttons -->
+        <div class="button-group">
+            <button type="submit" class="button submit-button">Add Prescription</button>
+            <a href="{{ url_for('view_patient', patient_id=patient_id) }}" class="button cancel-button">Cancel</a>
+        </div>
+    </form>
 </body>
 </html>
