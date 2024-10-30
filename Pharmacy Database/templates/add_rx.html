@@ -8,11 +8,21 @@
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 20px;
+        }
+
+        h1 {
+            margin-top: 0;
+            position: absolute;
+            top: 20px;
+            left: 20px;
         }
 
         form {
             max-width: 400px;
-            margin: 0 auto;
             padding: 20px;
             border: 1px solid #ccc;
             border-radius: 10px;
@@ -34,30 +44,32 @@
             box-sizing: border-box;
         }
 
-        .ndc-credentials-group {
+        .med-group {
             display: flex;
             gap: 10px;
             margin-bottom: 10px;
         }
 
-        .ndc-credentials-group input {
-            flex: 1;
+        .credentials-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        #credentials {
+            flex: 0.8;
             padding: 10px;
             box-sizing: border-box;
         }
 
-        #ndc_number {
-            flex: 1.5; /* Further reduced width of the NDC entry bar */
-        }
-
         .button {
-            padding: 8px 12px;
+            padding: 10px 15px;
             font-size: 14px;
             cursor: pointer;
             border-radius: 5px;
             border: none;
             text-align: center;
-            margin: 5px 0; /* Space between button and input fields */
         }
 
         .submit-button {
@@ -84,21 +96,58 @@
             text-decoration: none;
             display: inline-block;
             text-align: center;
-            margin-top: 10px;
+            padding: 10px 15px;
         }
 
         .cancel-button:hover {
             background-color: #d32f2f;
         }
 
-        .button-group {
+        .aligned-buttons {
             display: flex;
-            justify-content: space-between;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 10px;
+            align-items: center;
+        }
+
+        .results-section {
+            width: 450px;
+            margin-left: 30px;
+            padding: 10px;
+            border: 2px solid #ccc; /* Thicker border for clearer separation */
+            border-radius: 10px;
+            background-color: #fff;
+        }
+
+        .results-section h3 {
+            text-align: center;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
             margin-top: 10px;
         }
 
-        .spacer {
-            margin-top: 20px; /* Extra space between buttons and drug name field */
+        th, td {
+            border: 2px solid #ccc; /* Thicker border for table cells */
+            padding: 8px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+
+        .med-result {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 5px;
         }
     </style>
     <script>
@@ -118,14 +167,14 @@
             }
         }
 
-        // Function to check if the NDC already exists in the database
-        async function checkNDC() {
-            const ndcInput = document.getElementById('ndc_number').value;
+        // Function to check for matching medications
+        async function checkMed() {
+            const medName = document.getElementById('med_name').value;
             const credentials = document.getElementById('credentials').value;
 
-            if (ndcInput.length === 11 && credentials.length === 4) {
+            if (medName.length >= 3 && credentials.length === 4) {
                 try {
-                    const response = await fetch(`/check_ndc?ndc=${ndcInput}&credentials=${credentials}`, {
+                    const response = await fetch(`/check_med?med_name=${medName}&credentials=${credentials}`, {
                         method: 'GET'
                     });
 
@@ -134,45 +183,72 @@
                     }
 
                     const data = await response.json();
+                    const resultsSection = document.getElementById('med_results');
+                    resultsSection.innerHTML = '<h3>Matching Medications</h3>';
 
-                    if (data.exists) {
-                        document.getElementById('drug').value = data.drug_name || '';
-                        alert('NDC found! Autofilled medication details.');
+                    if (data.meds && data.meds.length > 0) {
+                        // Create a table for results
+                        let tableHTML = `
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Drug Name</th>
+                                        <th>NDC</th>
+                                        <th>Strength</th>
+                                        <th>BOH</th>
+                                        <th>Select</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                        `;
+
+                        data.meds.forEach(med => {
+                            tableHTML += `
+                                <tr>
+                                    <td>${med.name}</td>
+                                    <td>${med.ndc}</td>
+                                    <td>${med.strength}</td>
+                                    <td>${med.quantity}</td>
+                                    <td><input type="radio" name="selected_med" value="${med.ndc}"></td>
+                                </tr>
+                            `;
+                        });
+
+                        tableHTML += '</tbody></table>';
+                        resultsSection.innerHTML += tableHTML;
                     } else {
-                        alert('No match found for NDC. Please add the new medication.');
+                        resultsSection.innerHTML += '<p>No matching medications found.</p>';
                     }
                 } catch (error) {
                     console.error('Error:', error);
-                    alert('Error checking NDC. Please try again.');
+                    alert('Error checking medication. Please try again.');
                 }
             } else {
-                alert('Please enter a valid 11-digit NDC and 4-digit credentials.');
+                alert('Please enter at least 3 letters of the medication name and a valid 4-digit credential.');
             }
         }
     </script>
 </head>
 <body>
+    <!-- Add New Prescription Title -->
     <h1>Add New Prescription</h1>
 
+    <!-- Prescription Form -->
     <form method="POST" action="{{ url_for('add_rx', patient_id=patient_id) }}">
-        <!-- NDC Number and credentials entry -->
-        <div class="ndc-credentials-group">
-            <input type="text" id="ndc_number" name="ndc_number" maxlength="11" pattern="\d{11}" required placeholder="Enter 11-digit NDC Number">
-            <input type="text" id="credentials" name="credentials" maxlength="4" pattern="\d{4}" required placeholder="Enter 4-digit Credentials">
+        <!-- Medication name entry -->
+        <div class="med-group">
+            <label for="med_name">Drug Name:</label>
+            <input type="text" id="med_name" name="med_name" maxlength="255" required placeholder="3 letters minimum">
         </div>
 
-        <!-- Check NDC and Add New Med buttons -->
-        <div class="button-group">
-            <button type="button" class="button submit-button" onclick="checkNDC()">Check NDC</button>
+        <!-- Credentials and Check Med button -->
+        <div class="credentials-group">
+            <input type="text" id="credentials" name="credentials" maxlength="4" pattern="\d{4}" required placeholder="4-digit Credentials">
+            <button type="button" class="button submit-button" onclick="checkMed()">Check Med</button>
             <a href="{{ url_for('add_med') }}" class="button add-med-button">Add New Med</a>
         </div>
 
-        <!-- Spacer to add extra space between buttons and drug name field -->
-        <div class="spacer"></div>
-
-        <label for="drug">Drug Name:</label>
-        <input type="text" id="drug" name="drug" maxlength="255" required>
-
+        <!-- Quantity, Days Supply, Refills -->
         <label for="quantity">Quantity:</label>
         <input type="text" id="quantity" name="quantity" maxlength="6" pattern="\d{1,6}" required>
 
@@ -182,6 +258,7 @@
         <label for="refills">Refills:</label>
         <input type="text" id="refills" name="refills" maxlength="3" pattern="\d{1,3}" required>
 
+        <!-- Date fields -->
         <label for="date_written">Date Written (YYYY-MM-DD):</label>
         <input type="date" id="date_written" name="date_written" required onchange="autoFillDateExpired()">
 
@@ -191,6 +268,7 @@
         <label for="date_filled">Date Filled (YYYY-MM-DD):</label>
         <input type="date" id="date_filled" name="date_filled" required>
 
+        <!-- Directions (sig) -->
         <label for="sig">Directions (Max 150 characters):</label>
         <textarea id="sig" name="sig" maxlength="150" required></textarea>
 
@@ -199,10 +277,16 @@
         <input type="text" id="prescription_credentials" name="prescription_credentials" maxlength="4" pattern="\d{4}" required>
 
         <!-- Submit and Cancel buttons -->
-        <div class="button-group">
+        <div class="aligned-buttons">
             <button type="submit" class="button submit-button">Add Prescription</button>
             <a href="{{ url_for('view_patient', patient_id=patient_id) }}" class="button cancel-button">Cancel</a>
         </div>
     </form>
+
+    <!-- Matching Medications Section -->
+    <div id="med_results" class="results-section">
+        <h3>Matching Medications</h3>
+        <!-- Results table will be dynamically populated here -->
+    </div>
 </body>
 </html>

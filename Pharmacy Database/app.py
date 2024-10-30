@@ -68,6 +68,13 @@ app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 
 
+# Define a custom Jinja2 filter for enumerate
+def jinja_enumerate(iterable, start=0):
+    return enumerate(iterable, start=start)
+
+# Add the filter to the Flask app
+app.jinja_env.filters['enumerate'] = jinja_enumerate
+
 def generate_credentials(username, password, db_name):
     global credentials_storage  # Ensure we're modifying the global dictionary
 
@@ -235,21 +242,78 @@ def search_patient():
 def view_patient(patient_id):
     if request.method == 'POST':
         entered_credentials = request.form['credentials']
+
+        # Verify the credentials before accessing the database
         user_info = verify_credentials(entered_credentials)
         if not user_info:
             flash("Invalid or expired credentials. Please try again.")
             return redirect(url_for('patients'))
     else:
+        # For GET requests, use stored credentials
         user_info = credentials_storage.get(list(credentials_storage.keys())[0])
 
     if not user_info:
         flash("Could not retrieve credentials. Please log in again.")
         return redirect(url_for('login'))
 
-    # Fetch the patient profile and medication report
-    patient_profile, medication_report, age = get_patient_profile(user_info['username'], user_info['password'], user_info['db_name'], patient_id)
+    # Fetch the patient profile and their medication report, along with age
+    patient_profile, medication_report, age = get_patient_profile(
+        user_info['username'], user_info['password'], user_info['db_name'], patient_id
+    )
 
-    return render_template('view_profile.html', profile=patient_profile, meds=medication_report, age=age)
+    return render_template(
+        'view_profile.html',
+        profile=patient_profile,
+        meds=medication_report,
+        age=age,
+        enumerate=enumerate  # Pass the enumerate function
+    )
+
+
+
+@app.route('/check_med', methods=['GET'])
+def check_med():
+    med_name = request.args.get('med_name')
+    credentials = request.args.get('credentials')
+
+    if not med_name or not credentials:
+        return jsonify({'error': 'Invalid input parameters.'}), 400
+
+    # Verify credentials
+    user_info = verify_credentials(credentials)
+    if not user_info:
+        return jsonify({'error': 'Invalid or expired credentials.'}), 400
+
+    username = user_info['username']
+    password = user_info['password']
+
+    # Connect to the database
+    mydb = connect_to_database(username, password)
+    if not mydb:
+        return jsonify({'error': 'Error connecting to the database.'}), 500
+
+    cursor = mydb.cursor(dictionary=True)
+
+    # Query to find medications matching the first 3 letters of the name, sorted by quantity
+    cursor.execute("""
+        SELECT ndc_number AS ndc, drug_name AS name, strength, quantity
+        FROM inventory
+        WHERE drug_name LIKE %s
+        ORDER BY quantity DESC
+        LIMIT 10
+    """, (f"{med_name[:3]}%",))
+
+    meds = cursor.fetchall()
+
+    if not meds:
+        return jsonify({'error': 'No matching medications found.'}), 404
+
+    return jsonify({'meds': meds})
+
+
+
+
+
 
 
 # Add Rx Route (Displays the form to add a new prescription)
@@ -489,25 +553,27 @@ def inventory():
 def view_inventory():
     sort_by = request.args.get('sort_by', 'boh')
     sort_order = request.args.get('sort_order', 'desc')
-    
-    # Get credentials from form or previous session
-    entered_credentials = request.form.get('credentials') or request.args.get('credentials')
 
-    # Verify credentials before accessing the database
+    entered_credentials = request.form.get('credentials') or request.args.get('credentials')
     user_info = verify_credentials(entered_credentials)
+
     if not user_info:
         flash("Invalid or expired credentials. Please try again.")
         return redirect(url_for('inventory'))
 
-    # Fetch inventory data, total value, and item count
+    # Fetch inventory data
     inventory_data, total_inventory_value, inventory_items_count = view_inventory_table(
         user_info['username'], user_info['password'], sort_by, sort_order
     )
 
-    # Render the template with fetched data and totals
-    return render_template('view_inventory.html', inventory=inventory_data, 
-                           total_inventory_value=total_inventory_value, 
-                           inventory_items_count=inventory_items_count)
+    # Optionally fetch profile data if needed
+    patient_profile = get_patient_profile(user_info['username'], user_info['password'], db_name, patient_id)
+
+    return render_template('view_inventory.html', 
+                           inventory=inventory_data,
+                           total_inventory_value=total_inventory_value,
+                           inventory_items_count=inventory_items_count,
+                           profile=patient_profile)  # Only if profile is needed
 
 
 
