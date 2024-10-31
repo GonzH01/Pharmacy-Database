@@ -170,11 +170,12 @@
         // Function to check for matching medications
         async function checkMed() {
             const medName = document.getElementById('med_name').value;
+            const strength = document.getElementById('strength').value;
             const credentials = document.getElementById('credentials').value;
 
-            if (medName.length >= 3 && credentials.length === 4) {
+            if (medName.length >= 3 && strength && credentials.length === 4) {
                 try {
-                    const response = await fetch(`/check_med?med_name=${medName}&credentials=${credentials}`, {
+                    const response = await fetch(`/check_med?med_name=${medName}&strength=${strength}&credentials=${credentials}`, {
                         method: 'GET'
                     });
 
@@ -224,7 +225,7 @@
                     alert('Error checking medication. Please try again.');
                 }
             } else {
-                alert('Please enter at least 3 letters of the medication name and a valid 4-digit credential.');
+                alert('Please enter at least 3 letters of the medication name, a valid strength, and a valid 4-digit credential.');
             }
         }
     </script>
@@ -235,10 +236,13 @@
 
     <!-- Prescription Form -->
     <form method="POST" action="{{ url_for('add_rx', patient_id=patient_id) }}">
-        <!-- Medication name entry -->
+        <!-- Medication name and strength entry -->
         <div class="med-group">
             <label for="med_name">Drug Name:</label>
             <input type="text" id="med_name" name="med_name" maxlength="255" required placeholder="3 letters minimum">
+            
+            <label for="strength">Strength:</label>
+            <input type="text" id="strength" name="strength" required placeholder="e.g., 500mg">
         </div>
 
         <!-- Credentials and Check Med button -->

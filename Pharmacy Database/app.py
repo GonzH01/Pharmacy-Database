@@ -274,9 +274,10 @@ def view_patient(patient_id):
 @app.route('/check_med', methods=['GET'])
 def check_med():
     med_name = request.args.get('med_name')
+    strength = request.args.get('strength')
     credentials = request.args.get('credentials')
 
-    if not med_name or not credentials:
+    if not med_name or not credentials or not strength:
         return jsonify({'error': 'Invalid input parameters.'}), 400
 
     # Verify credentials
@@ -294,14 +295,14 @@ def check_med():
 
     cursor = mydb.cursor(dictionary=True)
 
-    # Query to find medications matching the first 3 letters of the name, sorted by quantity
+    # Query to find medications matching the first 3 letters of the name and strength
     cursor.execute("""
         SELECT ndc_number AS ndc, drug_name AS name, strength, quantity
         FROM inventory
-        WHERE drug_name LIKE %s
+        WHERE drug_name LIKE %s AND strength = %s
         ORDER BY quantity DESC
         LIMIT 10
-    """, (f"{med_name[:3]}%",))
+    """, (f"{med_name[:3]}%", strength))
 
     meds = cursor.fetchall()
 
@@ -309,8 +310,6 @@ def check_med():
         return jsonify({'error': 'No matching medications found.'}), 404
 
     return jsonify({'meds': meds})
-
-
 
 
 
@@ -553,28 +552,24 @@ def inventory():
 def view_inventory():
     sort_by = request.args.get('sort_by', 'boh')
     sort_order = request.args.get('sort_order', 'desc')
-
-    entered_credentials = request.form.get('credentials') or request.args.get('credentials')
+    entered_credentials = request.args.get('credentials') or request.form.get('credentials')
     user_info = verify_credentials(entered_credentials)
 
     if not user_info:
         flash("Invalid or expired credentials. Please try again.")
         return redirect(url_for('inventory'))
 
-    # Fetch inventory data
+    # Fetch inventory data only
     inventory_data, total_inventory_value, inventory_items_count = view_inventory_table(
         user_info['username'], user_info['password'], sort_by, sort_order
     )
 
-    # Optionally fetch profile data if needed
-    patient_profile = get_patient_profile(user_info['username'], user_info['password'], db_name, patient_id)
-
-    return render_template('view_inventory.html', 
-                           inventory=inventory_data,
-                           total_inventory_value=total_inventory_value,
-                           inventory_items_count=inventory_items_count,
-                           profile=patient_profile)  # Only if profile is needed
-
+    return render_template(
+        'view_inventory.html',
+        inventory=inventory_data,
+        total_inventory_value=total_inventory_value,
+        inventory_items_count=inventory_items_count
+    )
 
 
 # Route to download inventory as CSV
