@@ -43,7 +43,7 @@
             background-color: #45a049;
         }
         .exit-button {
-            background-color: #f44336; /* Red background for Exit button */
+            background-color: #f44336;
             color: white;
             text-decoration: none;
             padding: 10px 20px;
@@ -55,7 +55,7 @@
             border-radius: 5px;
         }
         .exit-button:hover {
-            background-color: #d32f2f; /* Darker shade of red on hover */
+            background-color: #d32f2f;
         }
         .right-button {
             float: right;
@@ -104,37 +104,29 @@
         <table>
             <tr>
                 <th>Allergies</th>
-                <td class="allergies">{{ profile[11] }}</td> <!-- Display allergies in red -->
+                <td class="allergies">{{ profile[11] }}</td>
                 <th>Age</th>
-                <td>{{ age }}</td> <!-- Display calculated age -->
+                <td>{{ age }}</td>
                 <th>Conditions</th>
-                <td>{{ profile[12] }}</td> <!-- Display conditions in normal color -->
+                <td>{{ profile[12] }}</td>
             </tr>
         </table>
 
-        <!-- Patient Information Header in a single row table -->
+        <!-- Patient Information Header -->
         <table>
             <tr>
                 <th>Name</th>
-                <td>{{ profile[1] }} {{ profile[2] }}</td> <!-- first_name + last_name -->
+                <td>{{ profile[1] }} {{ profile[2] }}</td>
                 <th>Address</th>
-                <td>{{ profile[5] }}, {{ profile[6] }}, {{ profile[7] }} {{ profile[8] }}</td> <!-- street, city, state, zip_code -->
+                <td>{{ profile[5] }}, {{ profile[6] }}, {{ profile[7] }} {{ profile[8] }}</td>
                 <th>Date of Birth</th>
-                <td>
-                    {% if profile[3] %}
-                        {{ profile[3].strftime('%m/%d/%Y') }}
-                    {% endif %}
-                </td> <!-- MM/DD/YYYY format -->
+                <td>{% if profile[3] %}{{ profile[3].strftime('%m/%d/%Y') }}{% endif %}</td>
                 <th>Delivery Preference</th>
-                <td>{{ profile[9] }}</td> <!-- delivery -->
+                <td>{{ profile[9] }}</td>
                 <th>Gender</th>
-                <td>{{ profile[4] }}</td> <!-- gender -->
+                <td>{{ profile[4] }}</td>
                 <th>Phone Number</th>
-                <td>
-                    {% if profile[10] %}
-                        ({{ profile[10] // 10000000 }}) {{ "{:03d}".format(profile[10] % 10000000 // 10000) }}-{{ "{:04d}".format(profile[10] % 10000) }}
-                    {% endif %}
-                </td> <!-- (###) ###-#### format -->
+                <td>{% if profile[10] %}({{ profile[10] // 10000000 }}) {{ "{:03d}".format(profile[10] % 10000000 // 10000) }}-{{ "{:04d}".format(profile[10] % 10000) }}{% endif %}</td>
             </tr>
         </table>
 
@@ -145,6 +137,7 @@
             <tr>
                 <th>#</th>
                 <th>Drug Name</th>
+                <th>Strength</th> <!-- Added Strength column -->
                 <th>Directions</th>
                 <th>Refills</th>
                 <th>Quantity</th>
@@ -154,8 +147,9 @@
             </tr>
             {% for index, med in enumerate(meds, start=1) %}
             <tr>
-                <td>{{ index }}</td> <!-- Index for each medication -->
+                <td>{{ index }}</td> <!-- Index -->
                 <td>{{ med[2] }}</td> <!-- Drug Name -->
+                <td>{{ med[11] }}</td> <!-- Strength  -->
                 <td>{{ med[10] }}</td> <!-- Directions (sig) -->
                 <td>{{ med[5] }}</td> <!-- Refills -->
                 <td>{{ med[3] }}</td> <!-- Quantity -->
@@ -171,20 +165,13 @@
 
         <!-- Buttons for Pagination and Actions -->
         <div class="pagination-buttons">
-            <!-- Exit button on the left -->
             <a href="{{ url_for('patients') }}">
                 <button class="exit-button left-button">Exit</button>
             </a>
-
-            <!-- Previous button -->
             <button class="button left-button">Previous</button>
-
-            <!-- Add New Rx button in the center -->
             <a href="{{ url_for('add_rx', patient_id=profile[0]) }}">
                 <button class="button center-button">Add New Rx</button>
             </a>
-
-            <!-- Next button on the right -->
             <button class="button right-button">Next</button>
         </div>
 
@@ -196,13 +183,11 @@
     </div>
 
     <script>
-        // Function to process user commands
         function processCommand() {
-            const commandInput = document.getElementById("command_input").value.toUpperCase(); // Convert input to uppercase
+            const commandInput = document.getElementById("command_input").value.toUpperCase();
             if (commandInput.startsWith("E")) {
-                const index = commandInput.slice(1); // Get the index number
+                const index = commandInput.slice(1);
                 if (!isNaN(index)) {
-                    // Redirect to the edit page for the specific medication
                     window.location.href = `/edit_rx/${index}/{{ profile[0] }}`;
                 } else {
                     alert("Invalid command. Please enter a valid index number after 'E'.");

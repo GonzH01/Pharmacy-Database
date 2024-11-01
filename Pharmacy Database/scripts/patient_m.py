@@ -49,12 +49,13 @@ def create_patient_profile(username, password, db_name, first_name, last_name, d
     val = (patient_ID, first_name, last_name, dob, gender, street, city, state, zip_code, delivery, phone, allergies, conditions)
     mycursor.execute(sql, val)
 
-    # Create the meds table if it doesn't exist, including the sig column
+    # Create the meds table if it doesn't exist, now with the strength column
     mycursor.execute(f"""
         CREATE TABLE IF NOT EXISTS meds (
             id INT AUTO_INCREMENT PRIMARY KEY,
             patient_ID VARCHAR(5),
             drug VARCHAR(255),
+            strength VARCHAR(50),  
             quantity INT,
             days_supply INT,
             refills INT,
@@ -69,6 +70,7 @@ def create_patient_profile(username, password, db_name, first_name, last_name, d
 
     mydb.commit()
     return f"Patient {first_name} {last_name} has been added successfully and meds table is ready."
+
 
 def search_patients(username, password, db_name, name=None, dob=None, phone=None):
     """Search patients based on name, dob, or phone number"""

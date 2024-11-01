@@ -115,7 +115,7 @@
             width: 450px;
             margin-left: 30px;
             padding: 10px;
-            border: 2px solid #ccc; /* Thicker border for clearer separation */
+            border: 2px solid #ccc;
             border-radius: 10px;
             background-color: #fff;
         }
@@ -133,7 +133,7 @@
         }
 
         th, td {
-            border: 2px solid #ccc; /* Thicker border for table cells */
+            border: 2px solid #ccc;
             padding: 8px;
             text-align: center;
         }
@@ -142,16 +142,8 @@
             background-color: #f2f2f2;
             font-weight: bold;
         }
-
-        .med-result {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-top: 5px;
-        }
     </style>
     <script>
-        // Function to auto-fill the expiration date based on the written date
         function autoFillDateExpired() {
             const dateWritten = document.getElementById("date_written").value;
             if (dateWritten) {
@@ -167,28 +159,26 @@
             }
         }
 
-        // Function to check for matching medications
         async function checkMed() {
             const medName = document.getElementById('med_name').value;
             const strength = document.getElementById('strength').value;
             const credentials = document.getElementById('credentials').value;
-
+        
             if (medName.length >= 3 && strength && credentials.length === 4) {
                 try {
                     const response = await fetch(`/check_med?med_name=${medName}&strength=${strength}&credentials=${credentials}`, {
                         method: 'GET'
                     });
-
+        
                     if (!response.ok) {
-                        throw new Error('Network response was not ok');
+                        throw new Error('Medication not found. Select "Add New Med" to add this medication.');
                     }
-
+        
                     const data = await response.json();
                     const resultsSection = document.getElementById('med_results');
                     resultsSection.innerHTML = '<h3>Matching Medications</h3>';
-
+        
                     if (data.meds && data.meds.length > 0) {
-                        // Create a table for results
                         let tableHTML = `
                             <table>
                                 <thead>
@@ -196,47 +186,65 @@
                                         <th>Drug Name</th>
                                         <th>NDC</th>
                                         <th>Strength</th>
-                                        <th>BOH</th>
+                                        <th>Balance on Hand</th>
                                         <th>Select</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                         `;
-
+        
                         data.meds.forEach(med => {
                             tableHTML += `
                                 <tr>
                                     <td>${med.name}</td>
                                     <td>${med.ndc}</td>
                                     <td>${med.strength}</td>
-                                    <td>${med.quantity}</td>
-                                    <td><input type="radio" name="selected_med" value="${med.ndc}"></td>
+                                    <td>${med.balance_on_hand}</td>
+                                    <td><input type="radio" name="selected_med" value="${med.ndc}" onclick="setMedication('${med.ndc}', '${med.name}', '${med.strength}')"></td>
                                 </tr>
                             `;
                         });
-
+        
                         tableHTML += '</tbody></table>';
                         resultsSection.innerHTML += tableHTML;
                     } else {
-                        resultsSection.innerHTML += '<p>No matching medications found.</p>';
+                        resultsSection.innerHTML += '<p>Medication not found. Select "Add New Med" to add this medication.</p>';
                     }
                 } catch (error) {
                     console.error('Error:', error);
-                    alert('Error checking medication. Please try again.');
+                    alert('Medication not found. Select "Add New Med" to add this medication.');
                 }
             } else {
                 alert('Please enter at least 3 letters of the medication name, a valid strength, and a valid 4-digit credential.');
             }
         }
+        
+
+        function setMedication(ndc, drugName, strength) {
+            document.getElementById('ndc_number').value = ndc;
+            document.getElementById('drug').value = drugName;
+            document.getElementById('selected_strength').value = strength;  // Save strength to hidden field
+            console.log("Selected Medication:", { ndc, drugName, strength });
+        }
+
+        function validateForm() {
+            const ndcNumber = document.getElementById('ndc_number').value;
+            const drug = document.getElementById('drug').value;
+            const strength = document.getElementById('selected_strength').value;  // Use selected_strength for validation
+
+            console.log("Form Submission Values:", { ndcNumber, drug, strength });
+            if (!ndcNumber || !drug || !strength) {
+                alert("Please select a medication from the list before submitting.");
+                return false;
+            }
+            return true;
+        }
     </script>
 </head>
 <body>
-    <!-- Add New Prescription Title -->
     <h1>Add New Prescription</h1>
 
-    <!-- Prescription Form -->
-    <form method="POST" action="{{ url_for('add_rx', patient_id=patient_id) }}">
-        <!-- Medication name and strength entry -->
+    <form method="POST" action="{{ url_for('add_rx', patient_id=patient_id) }}" onsubmit="return validateForm()">
         <div class="med-group">
             <label for="med_name">Drug Name:</label>
             <input type="text" id="med_name" name="med_name" maxlength="255" required placeholder="3 letters minimum">
@@ -245,14 +253,19 @@
             <input type="text" id="strength" name="strength" required placeholder="e.g., 500mg">
         </div>
 
-        <!-- Credentials and Check Med button -->
+        <input type="hidden" id="ndc_number" name="ndc_number">
+        <input type="hidden" id="drug" name="drug">
+        <input type="hidden" id="selected_strength" name="strength">  <!-- Updated field name to "strength" -->
+
         <div class="credentials-group">
             <input type="text" id="credentials" name="credentials" maxlength="4" pattern="\d{4}" required placeholder="4-digit Credentials">
             <button type="button" class="button submit-button" onclick="checkMed()">Check Med</button>
             <a href="{{ url_for('add_med') }}" class="button add-med-button">Add New Med</a>
         </div>
 
-        <!-- Quantity, Days Supply, Refills -->
+        <label for="sig">Directions (Max 150 characters):</label>
+        <textarea id="sig" name="sig" maxlength="150" required></textarea>
+
         <label for="quantity">Quantity:</label>
         <input type="text" id="quantity" name="quantity" maxlength="6" pattern="\d{1,6}" required>
 
@@ -262,7 +275,6 @@
         <label for="refills">Refills:</label>
         <input type="text" id="refills" name="refills" maxlength="3" pattern="\d{1,3}" required>
 
-        <!-- Date fields -->
         <label for="date_written">Date Written (YYYY-MM-DD):</label>
         <input type="date" id="date_written" name="date_written" required onchange="autoFillDateExpired()">
 
@@ -272,25 +284,17 @@
         <label for="date_filled">Date Filled (YYYY-MM-DD):</label>
         <input type="date" id="date_filled" name="date_filled" required>
 
-        <!-- Directions (sig) -->
-        <label for="sig">Directions (Max 150 characters):</label>
-        <textarea id="sig" name="sig" maxlength="150" required></textarea>
-
-        <!-- Credentials input for prescription submission -->
         <label for="prescription_credentials">Enter 4-Digit Credentials to Add Prescription:</label>
         <input type="text" id="prescription_credentials" name="prescription_credentials" maxlength="4" pattern="\d{4}" required>
 
-        <!-- Submit and Cancel buttons -->
         <div class="aligned-buttons">
             <button type="submit" class="button submit-button">Add Prescription</button>
             <a href="{{ url_for('view_patient', patient_id=patient_id) }}" class="button cancel-button">Cancel</a>
         </div>
     </form>
 
-    <!-- Matching Medications Section -->
     <div id="med_results" class="results-section">
         <h3>Matching Medications</h3>
-        <!-- Results table will be dynamically populated here -->
     </div>
 </body>
 </html>

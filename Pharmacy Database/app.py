@@ -270,7 +270,6 @@ def view_patient(patient_id):
     )
 
 
-
 @app.route('/check_med', methods=['GET'])
 def check_med():
     med_name = request.args.get('med_name')
@@ -295,12 +294,14 @@ def check_med():
 
     cursor = mydb.cursor(dictionary=True)
 
-    # Query to find medications matching the first 3 letters of the name and strength
+    # Query to find medications matching the name and strength with balance on hand
     cursor.execute("""
-        SELECT ndc_number AS ndc, drug_name AS name, strength, quantity
-        FROM inventory
-        WHERE drug_name LIKE %s AND strength = %s
-        ORDER BY quantity DESC
+        SELECT i.ndc_number AS ndc, i.drug_name AS name, i.strength, 
+               COALESCE(b.balance_on_hand, 0) AS balance_on_hand
+        FROM inventory i
+        LEFT JOIN balance b ON i.ndc_number = b.ndc_number
+        WHERE i.drug_name LIKE %s AND i.strength = %s
+        ORDER BY b.balance_on_hand DESC
         LIMIT 10
     """, (f"{med_name[:3]}%", strength))
 
@@ -315,13 +316,15 @@ def check_med():
 
 
 
-# Add Rx Route (Displays the form to add a new prescription)
+
+
 @app.route('/add_rx/<patient_id>', methods=['GET', 'POST'])
 def add_rx(patient_id):
     if request.method == 'POST':
         # Get form data for the prescription
         ndc_number = request.form['ndc_number']
         drug = request.form['drug']
+        strength = request.form.get('strength')  # Retrieve strength from form
         quantity = request.form['quantity']
         days_supply = request.form['days_supply']
         refills = request.form['refills']
@@ -337,15 +340,20 @@ def add_rx(patient_id):
             flash("Invalid or expired credentials. Please log in again.")
             return redirect(url_for('patients'))
 
+        # Check if the strength field is populated for debugging
+        if not strength:
+            flash("Strength field is missing. Please select a medication.")
+            return redirect(url_for('add_rx', patient_id=patient_id))
+
         # Insert the new prescription into the meds table
         mydb = connect_to_database(user_info['username'], user_info['password'])
         mycursor = mydb.cursor()
 
         sql = """
-            INSERT INTO meds (patient_ID, drug, quantity, days_supply, refills, date_written, date_expired, date_filled, ndc_number, sig)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO meds (patient_ID, drug, strength, quantity, days_supply, refills, date_written, date_expired, date_filled, ndc_number, sig)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
-        values = (patient_id, drug, quantity, days_supply, refills, date_written, date_expired, date_filled, ndc_number, sig)
+        values = (patient_id, drug, strength, quantity, days_supply, refills, date_written, date_expired, date_filled, ndc_number, sig)
         mycursor.execute(sql, values)
         mydb.commit()
 
@@ -353,6 +361,8 @@ def add_rx(patient_id):
         return redirect(url_for('view_patient', patient_id=patient_id))
 
     return render_template('add_rx.html', patient_id=patient_id)
+
+
 
 # Edit Rx Route (Displays the form to edit an existing prescription)
 @app.route('/edit_rx/<int:id>/<patient_id>', methods=['GET', 'POST'])
@@ -548,18 +558,20 @@ def inventory():
     # Render the inventory management page
     return render_template('inventory.html')
 
-@app.route('/view_inventory', methods=['GET', 'POST'])
+@app.route('/view_inventory')
 def view_inventory():
+    # Get credentials and sorting preferences from query parameters
+    credentials = request.args.get('credentials')
     sort_by = request.args.get('sort_by', 'boh')
     sort_order = request.args.get('sort_order', 'desc')
-    entered_credentials = request.args.get('credentials') or request.form.get('credentials')
-    user_info = verify_credentials(entered_credentials)
 
+    # Verify credentials
+    user_info = verify_credentials(credentials)
     if not user_info:
-        flash("Invalid or expired credentials. Please try again.")
+        flash("Invalid or expired credentials. Please log in again.")
         return redirect(url_for('inventory'))
 
-    # Fetch inventory data only
+    # Fetch inventory data with sorting
     inventory_data, total_inventory_value, inventory_items_count = view_inventory_table(
         user_info['username'], user_info['password'], sort_by, sort_order
     )
@@ -570,6 +582,7 @@ def view_inventory():
         total_inventory_value=total_inventory_value,
         inventory_items_count=inventory_items_count
     )
+
 
 
 # Route to download inventory as CSV
