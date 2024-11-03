@@ -20,6 +20,7 @@ import webbrowser
 import threading
 import time
 
+
 # Global variables for MySQL credentials, database name, and credential storage
 db_name = None
 mysql_user = None
@@ -34,7 +35,6 @@ def selected_database():
 def get_database_credentials():
     global db_name, mysql_user, mysql_password
 
-    # Prompt for MySQL credentials and database name
     mysql_user = input("Enter MySQL username: ").strip()
     mysql_password = input("Enter MySQL password: ").strip()
     db_name = input("Name of Database: ").strip()
@@ -56,6 +56,7 @@ def get_database_credentials():
             exit()
 
     open_browser()
+
 
 
 def open_browser():
@@ -114,6 +115,7 @@ def verify_credentials(entered_credentials):
     return user_info
 
 
+
 @app.route('/', methods=['GET', 'POST'])
 def login():
     cleanup_expired_credentials()  # Clean up expired credentials on login
@@ -148,6 +150,8 @@ def main_menu():
             return render_template('index.html', credentials_code=credentials_code, expiration_time=expiration_time)
     
     return render_template('index.html', credentials_code=None)
+
+
 
 @app.route('/add_patient', methods=['GET', 'POST'])
 def add_patient():
@@ -188,27 +192,34 @@ def add_patient():
             return redirect(url_for('patients'))
 
         # Call the create_patient_profile function with all required arguments
-        result = create_patient_profile(
-            user_info['username'],
-            user_info['password'],
-            user_info['db_name'],  # Pass db_name
-            first_name,
-            last_name,
-            dob,
-            gender,
-            street,
-            city,
-            state,
-            zip_code,
-            delivery,
-            phone,
-            allergies,
-            conditions
-        )
+        try:
+            result = create_patient_profile(
+                user_info['username'],
+                user_info['password'],
+                user_info['db_name'],  # Pass db_name
+                first_name,
+                last_name,
+                dob,
+                gender,
+                street,
+                city,
+                state,
+                zip_code,
+                delivery,
+                phone,
+                allergies,
+                conditions
+            )
+            # Redirect to 'patients' page with success flag for JavaScript alert
+            return redirect(url_for('patients', success='true'))
 
-        flash(result)
-        return redirect(url_for('patients'))
-
+        except Exception as e:
+            # Handle errors if patient creation fails
+            flash("An error occurred while adding the patient. Please try again.")
+            print(f"Error adding patient: {e}")  # Optional: log the error for debugging
+            return redirect(url_for('add_patient'))
+            
+    # Render the form if GET request
     return render_template('add_patient.html')
 
 
@@ -240,34 +251,42 @@ def search_patient():
 
 @app.route('/view_patient/<patient_id>', methods=['GET', 'POST'])
 def view_patient(patient_id):
+    page = request.args.get('page', 1, type=int)  # Get page number from URL or default to 1
+    limit = 9
+    offset = (page - 1) * limit
+
     if request.method == 'POST':
         entered_credentials = request.form['credentials']
-
-        # Verify the credentials before accessing the database
         user_info = verify_credentials(entered_credentials)
         if not user_info:
             flash("Invalid or expired credentials. Please try again.")
             return redirect(url_for('patients'))
     else:
-        # For GET requests, use stored credentials
         user_info = credentials_storage.get(list(credentials_storage.keys())[0])
 
     if not user_info:
         flash("Could not retrieve credentials. Please log in again.")
         return redirect(url_for('login'))
 
-    # Fetch the patient profile and their medication report, along with age
+    # Fetch the patient profile, medications, and age with pagination
     patient_profile, medication_report, age = get_patient_profile(
-        user_info['username'], user_info['password'], user_info['db_name'], patient_id
+        user_info['username'], user_info['password'], user_info['db_name'], patient_id, limit=limit, offset=offset
     )
+
+    # Check if there is a next page
+    has_next = len(medication_report) == limit
 
     return render_template(
         'view_profile.html',
         profile=patient_profile,
         meds=medication_report,
         age=age,
-        enumerate=enumerate  # Pass the enumerate function
+        page=page,
+        has_next=has_next,
+        enumerate=enumerate  # Pass enumerate to the template
     )
+
+
 
 
 @app.route('/check_med', methods=['GET'])
@@ -389,26 +408,18 @@ def edit_rx(id, patient_id):
         mydb = connect_to_database(user_info['username'], user_info['password'])
         mycursor = mydb.cursor()
 
+        # Update the prescription details in the meds table
         sql = """
-            UPDATE meds SET drug=%s, quantity=%s, days_supply=%s, refills=%s, date_written=%s, date_expired=%s, date_filled=%s, sig=%s
+            UPDATE meds 
+            SET drug=%s, quantity=%s, days_supply=%s, refills=%s, date_written=%s, date_expired=%s, date_filled=%s, sig=%s
             WHERE id=%s AND patient_ID=%s
         """
         values = (drug, quantity, days_supply, refills, date_written, date_expired, date_filled, sig, id, patient_id)
         mycursor.execute(sql, values)
         mydb.commit()
 
-        # Update the balance (if the edited prescription affects balance on hand)
-        update_result = update_balance(
-            ndc=drug,  # Assuming NDC is linked to the drug
-            new_balance_on_hand=quantity,
-            username=user_info['username'],
-            password=user_info['password']
-        )
-        flash(update_result)
-
         flash("Prescription updated successfully.")
         return redirect(url_for('view_patient', patient_id=patient_id))
-
 
     # Fetch the medication details for editing
     user_info = credentials_storage.get(list(credentials_storage.keys())[0])  # Grabbing stored credentials
@@ -423,6 +434,7 @@ def edit_rx(id, patient_id):
     mycursor.execute("SELECT * FROM meds WHERE id = %s AND patient_ID = %s", (id, patient_id))
     med = mycursor.fetchone()
     return render_template('edit_rx.html', med=med, id=id, patient_id=patient_id)
+
 
 def get_drug_by_ndc(ndc, username=None, password=None):
     mydb = connect_to_database(username, password)
@@ -520,13 +532,16 @@ def add_med():
         )
 
         if "Error connecting to the database" in result:
-            flash(result)
+            flash(result, 'error')
             return redirect(url_for('add_med'))
 
-        flash(result)
-        return redirect(url_for('inventory'))
+        # Redirect with success flag for JavaScript alert
+        return redirect(url_for('inventory', success='true'))
 
     return render_template('add_med.html')
+
+
+
 
 
 # Route to view inventory sorted by unit price
@@ -558,10 +573,14 @@ def inventory():
     # Render the inventory management page
     return render_template('inventory.html')
 
-@app.route('/view_inventory')
+@app.route('/view_inventory', methods=['GET', 'POST'])
 def view_inventory():
-    # Get credentials and sorting preferences from query parameters
-    credentials = request.args.get('credentials')
+    # Use request.form for POST or request.args for GET
+    if request.method == 'POST':
+        credentials = request.form.get('credentials')
+    else:  # method is GET
+        credentials = request.args.get('credentials')
+    
     sort_by = request.args.get('sort_by', 'boh')
     sort_order = request.args.get('sort_order', 'desc')
 

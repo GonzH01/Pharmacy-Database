@@ -82,6 +82,19 @@
             margin-top: 20px;
         }
     </style>
+    <script>
+        // Display a success alert if the URL contains success=true
+        function showMedicationAddedMessage() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('success') === 'true') {
+                alert('Medication Successfully Added!');
+                // Remove success parameter to prevent repeated alerts on reload
+                history.replaceState(null, '', window.location.pathname);
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', showMedicationAddedMessage);
+    </script>
 </head>
 <body>
     <div class="container">

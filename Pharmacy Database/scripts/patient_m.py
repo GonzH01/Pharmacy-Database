@@ -109,7 +109,7 @@ def search_patients(username, password, db_name, name=None, dob=None, phone=None
 
     return result
 
-def get_patient_profile(username, password, db_name, patient_id):
+def get_patient_profile(username, password, db_name, patient_id, limit=9, offset=0):
     mydb = connect_to_database(username, password, db_name)
     if not mydb:
         return "Error connecting to the database.", None, None
@@ -129,8 +129,16 @@ def get_patient_profile(username, password, db_name, patient_id):
     # Calculate age if dob is not None
     age = calculate_age(dob) if dob else "N/A"
 
-    # Fetch patient medication report
-    mycursor.execute("SELECT * FROM meds WHERE patient_ID = %s", (patient_id,))
+    # Fetch patient medication report with pagination
+    mycursor.execute(
+        """
+        SELECT * FROM meds
+        WHERE patient_ID = %s
+        ORDER BY date_filled DESC
+        LIMIT %s OFFSET %s
+        """,
+        (patient_id, limit, offset)
+    )
     meds = mycursor.fetchall()
 
     return profile, meds, age

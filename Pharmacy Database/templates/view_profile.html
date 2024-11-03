@@ -57,18 +57,9 @@
         .exit-button:hover {
             background-color: #d32f2f;
         }
-        .right-button {
-            float: right;
-        }
-        .left-button {
-            float: left;
-        }
-        .center-button {
-            display: block;
-            margin: 0 auto;
-        }
         .pagination-buttons {
-            clear: both;
+            display: flex;
+            justify-content: space-between;
             padding: 20px 0;
         }
         .allergies {
@@ -78,21 +69,12 @@
             margin-top: 20px;
             display: flex;
             align-items: center;
+            gap: 10px;
         }
         .entry-bar input {
             padding: 10px;
             font-size: 16px;
-            width: 80%;
-            margin-right: 10px;
-        }
-        .entry-bar button {
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
+            width: 60%;
         }
     </style>
 </head>
@@ -137,7 +119,7 @@
             <tr>
                 <th>#</th>
                 <th>Drug Name</th>
-                <th>Strength</th> <!-- Added Strength column -->
+                <th>Strength</th>
                 <th>Directions</th>
                 <th>Refills</th>
                 <th>Quantity</th>
@@ -145,17 +127,17 @@
                 <th>Last Filled</th>
                 <th>Expires On</th>
             </tr>
-            {% for index, med in enumerate(meds, start=1) %}
-            <tr>
-                <td>{{ index }}</td> <!-- Index -->
-                <td>{{ med[2] }}</td> <!-- Drug Name -->
-                <td>{{ med[11] }}</td> <!-- Strength  -->
-                <td>{{ med[10] }}</td> <!-- Directions (sig) -->
-                <td>{{ med[5] }}</td> <!-- Refills -->
-                <td>{{ med[3] }}</td> <!-- Quantity -->
-                <td>{{ med[4] }}</td> <!-- Days Supply -->
-                <td>{{ med[8].strftime('%m/%d/%Y') if med[8] else 'N/A' }}</td> <!-- Date Filled -->
-                <td>{{ med[7].strftime('%m/%d/%Y') if med[7] else 'N/A' }}</td> <!-- Expiration Date -->
+            {% for med in meds %}
+            <tr data-id="{{ med[0] }}">
+                <td>{{ (page - 1) * 9 + loop.index }}</td>
+                <td>{{ med[2] }}</td>
+                <td>{{ med[11] }}</td>
+                <td>{{ med[10] }}</td>
+                <td>{{ med[5] }}</td>
+                <td>{{ med[3] }}</td>
+                <td>{{ med[4] }}</td>
+                <td>{{ med[8].strftime('%m/%d/%Y') if med[8] else 'N/A' }}</td>
+                <td>{{ med[7].strftime('%m/%d/%Y') if med[7] else 'N/A' }}</td>
             </tr>
             {% endfor %}
         </table>
@@ -163,22 +145,18 @@
         <p>No medications found.</p>
         {% endif %}
 
-        <!-- Buttons for Pagination and Actions -->
+        <!-- Pagination and Action Buttons -->
         <div class="pagination-buttons">
-            <a href="{{ url_for('patients') }}">
-                <button class="exit-button left-button">Exit</button>
-            </a>
-            <button class="button left-button">Previous</button>
-            <a href="{{ url_for('add_rx', patient_id=profile[0]) }}">
-                <button class="button center-button">Add New Rx</button>
-            </a>
-            <button class="button right-button">Next</button>
+            <a href="{{ url_for('view_patient', patient_id=profile[0], page=page - 1) }}" class="button" {% if page <= 1 %}style="visibility: hidden;"{% endif %}>Previous</a>
+            <a href="{{ url_for('add_rx', patient_id=profile[0]) }}" class="button center-button">Add New Rx</a>
+            <a href="{{ url_for('view_patient', patient_id=profile[0], page=page + 1) }}" class="button" {% if not has_next %}style="visibility: hidden;"{% endif %}>Next</a>
         </div>
 
         <!-- Entry bar for command input (Edit Rx, etc.) -->
         <div class="entry-bar">
             <input type="text" id="command_input" placeholder="Enter 'E#' to edit a prescription" maxlength="10">
-            <button onclick="processCommand()">Submit</button>
+            <button onclick="processCommand()" class="button">Submit</button>
+            <a href="{{ url_for('patients') }}" class="exit-button">Exit</a>
         </div>
     </div>
 
@@ -186,9 +164,12 @@
         function processCommand() {
             const commandInput = document.getElementById("command_input").value.toUpperCase();
             if (commandInput.startsWith("E")) {
-                const index = commandInput.slice(1);
-                if (!isNaN(index)) {
-                    window.location.href = `/edit_rx/${index}/{{ profile[0] }}`;
+                const index = parseInt(commandInput.slice(1), 10);
+                const rows = document.querySelectorAll("table tr[data-id]");
+                
+                if (!isNaN(index) && index > 0 && index <= rows.length) {
+                    const medId = rows[index - 1].getAttribute("data-id");
+                    window.location.href = `/edit_rx/${medId}/{{ profile[0] }}`;
                 } else {
                     alert("Invalid command. Please enter a valid index number after 'E'.");
                 }

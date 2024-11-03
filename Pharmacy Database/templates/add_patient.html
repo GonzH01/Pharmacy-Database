@@ -35,13 +35,8 @@
             box-sizing: border-box;
         }
 
-        .phone-input {
+        .phone-input, .dob-input {
             width: 30%;
-            display: inline-block;
-        }
-
-        .dob-input {
-            width: 32%;
             display: inline-block;
         }
 
@@ -83,11 +78,9 @@
         }
     </style>
     <script>
-        // Function to call the Zippopotam.us API and fill City and State fields
         function autoFillCityState() {
             const zipInput = document.getElementById("zip_code").value;
-
-            if (zipInput.length === 5) {  // Ensure ZIP is 5 digits
+            if (zipInput.length === 5) {
                 fetch(`https://api.zippopotam.us/us/${zipInput}`)
                     .then(response => {
                         if (!response.ok) {
@@ -106,6 +99,14 @@
                     });
             }
         }
+
+        // Function to display a success alert if the URL contains success=true
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('success') === 'true') {
+                alert('Patient Successfully Added!');
+            }
+        });
     </script>
 </head>
 <body>

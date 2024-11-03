@@ -7,57 +7,82 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-        }
-        .container {
             margin: 20px;
+            background-color: #f9f9f9;
         }
+
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            background-color: #ffffff;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
         label {
             display: block;
-            margin: 10px 0 5px;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
         }
-        input {
-            padding: 10px;
-            font-size: 16px;
+
+        input[type="text"], input[type="date"] {
             width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
             box-sizing: border-box;
         }
-        .button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 20px;
-            text-align: center;
-            display: inline-block;
-            font-size: 16px;
-            margin: 10px 2px;
-            cursor: pointer;
-            border: none;
-            border-radius: 5px;
-        }
-        .button:hover {
-            background-color: #45a049;
-        }
-        .right-button {
-            float: right;
-        }
-        .cancel-button {
-            background-color: #f44336; /* Red background for Cancel button */
-            color: white;
-            padding: 10px 20px;
-            text-align: center;
-            display: inline-block;
-            font-size: 16px;
-            margin: 10px 2px;
-            cursor: pointer;
-            border: none;
-            border-radius: 5px;
-        }
-        .cancel-button:hover {
-            background-color: #d32f2f; /* Darker shade of red on hover */
-        }
-        /* Grey out the NDC input field */
+
         input[readonly] {
             background-color: #e9ecef;
             color: #6c757d;
+        }
+
+        .button {
+            width: 48%;
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            border: none;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .submit-button {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .submit-button:hover {
+            background-color: #45a049;
+        }
+
+        .cancel-button {
+            background-color: #f44336;
+            color: white;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .cancel-button:hover {
+            background-color: #d32f2f;
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: space-between;
         }
     </style>
 </head>
@@ -65,43 +90,52 @@
     <div class="container">
         <h1>Edit Prescription</h1>
         <form method="POST" action="{{ url_for('edit_rx', id=id, patient_id=patient_id) }}">
-            <label for="ndc_number">NDC Number: (11 digits)</label>
+            <!-- NDC Number input (readonly) -->
+            <label for="ndc_number">NDC Number (11 digits):</label>
             <input type="text" id="ndc_number" name="ndc_number" maxlength="11" required value="{{ med[9] }}" readonly>
 
+            <!-- Drug Name input -->
             <label for="drug">Drug Name:</label>
             <input type="text" id="drug" name="drug" maxlength="255" required value="{{ med[2] }}">
 
+            <!-- Quantity input -->
             <label for="quantity">Quantity:</label>
             <input type="text" id="quantity" name="quantity" maxlength="6" pattern="\d{1,6}" required value="{{ med[3] }}">
 
+            <!-- Days Supply input -->
             <label for="days_supply">Days Supply:</label>
             <input type="text" id="days_supply" name="days_supply" maxlength="6" pattern="\d{1,6}" required value="{{ med[4] }}">
 
+            <!-- Refills input -->
             <label for="refills">Refills:</label>
             <input type="text" id="refills" name="refills" maxlength="3" pattern="\d{1,3}" required value="{{ med[5] }}">
 
-            <label for="date_written">Date Written: (YYYY-MM-DD)</label>
+            <!-- Date Written input -->
+            <label for="date_written">Date Written (YYYY-MM-DD):</label>
             <input type="date" id="date_written" name="date_written" required value="{{ med[6] }}">
 
-            <label for="date_expired">Date Expired: (YYYY-MM-DD)</label>
+            <!-- Date Expired input -->
+            <label for="date_expired">Date Expired (YYYY-MM-DD):</label>
             <input type="date" id="date_expired" name="date_expired" required value="{{ med[7] }}">
 
-            <label for="date_filled">Date Filled: (YYYY-MM-DD)</label>
+            <!-- Date Filled input -->
+            <label for="date_filled">Date Filled (YYYY-MM-DD):</label>
             <input type="date" id="date_filled" name="date_filled" required value="{{ med[8] }}">
 
+            <!-- Directions (sig) input -->
             <label for="sig">Directions (150 characters max):</label>
             <input type="text" id="sig" name="sig" maxlength="150" required value="{{ med[10] }}">
 
-            <label for="credentials">Credentials: (4-Digit Code)</label>
+            <!-- Credentials input -->
+            <label for="credentials">4-Digit Credentials:</label>
             <input type="text" id="credentials" name="credentials" maxlength="4" pattern="\d{4}" required>
 
-            <button type="submit" class="button">Update Prescription</button>
+            <!-- Submit and Cancel buttons -->
+            <div class="button-group">
+                <button type="submit" class="button submit-button">Update Prescription</button>
+                <a href="{{ url_for('view_patient', patient_id=patient_id) }}" class="button cancel-button">Cancel</a>
+            </div>
         </form>
-
-        <!-- Cancel Button -->
-        <a href="{{ url_for('view_patient', patient_id=patient_id) }}">
-            <button class="cancel-button right-button">Cancel</button>
-        </a>
     </div>
 </body>
 </html>

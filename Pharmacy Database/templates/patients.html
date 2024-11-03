@@ -62,6 +62,18 @@
         }
     </style>
     <script>
+        // Function to show success message if URL contains success=true
+        function showPatientAddedMessage() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('success') === 'true') {
+                alert('Patient Successfully Added!');
+                // Remove the success parameter from the URL to prevent repeated alerts on page reload
+                history.replaceState(null, '', window.location.pathname);
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', showPatientAddedMessage);
+
         function validateForm() {
             var name = document.getElementById("name").value.trim();
             var dob = document.getElementById("dob").value.trim();

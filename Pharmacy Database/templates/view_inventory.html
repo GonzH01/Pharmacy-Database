@@ -133,19 +133,19 @@
 
             <!-- Sorting Buttons -->
             <div class="action-buttons">
-                <button type="submit" name="sort_by" value="boh" class="button filter-button" onclick="this.form.sort_order.value='desc';">
+                <button type="submit" name="sort_by" value="boh" class="button filter-button" onclick="document.getElementById('sort_order').value='desc';">
                     High to Low BOH
                 </button>
-                <button type="submit" name="sort_by" value="unit_price" class="button filter-button" onclick="this.form.sort_order.value='desc';">
+                <button type="submit" name="sort_by" value="unit_price" class="button filter-button" onclick="document.getElementById('sort_order').value='desc';">
                     High to Low Unit Price
                 </button>
-                <button type="submit" name="sort_by" value="inventory_value" class="button filter-button" onclick="this.form.sort_order.value='desc';">
+                <button type="submit" name="sort_by" value="inventory_value" class="button filter-button" onclick="document.getElementById('sort_order').value='desc';">
                     High to Low Inventory Value
                 </button>
             </div>
 
             <!-- Hidden Input for Sort Order -->
-            <input type="hidden" name="sort_order" value="desc">
+            <input type="hidden" id="sort_order" name="sort_order" value="desc">
         </div>
     </form>
 

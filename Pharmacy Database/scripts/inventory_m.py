@@ -173,32 +173,36 @@ def view_inventory_table(username, password, sort_by='boh', sort_order='desc'):
 
     # Define the sorting column based on user input
     sort_column = {
-        'boh': 'b.balance_on_hand',
-        'unit_price': 'b.unit_cost',
-        'inventory_value': 'b.inventory_value'
-    }.get(sort_by, 'b.balance_on_hand')
+        'boh': 'MAX(b.balance_on_hand)',
+        'unit_price': 'MAX(b.unit_cost)',
+        'inventory_value': 'MAX(b.inventory_value)'
+    }.get(sort_by, 'MAX(b.balance_on_hand)')
 
     # Define the sorting order (ASC or DESC)
     sort_order = 'ASC' if sort_order.lower() == 'asc' else 'DESC'
 
     # Fetch inventory data with unique NDCs and sorting
-    cursor.execute(f"""
-    SELECT i.drug_name, i.ndc_number, b.balance_on_hand, b.unit_cost, b.inventory_value
-    FROM inventory i
-    LEFT JOIN balance b ON i.ndc_number = b.ndc_number
-    GROUP BY i.ndc_number
-    ORDER BY {sort_column} {sort_order}
-    """)
+    try:
+        query = f"""
+        SELECT i.drug_name, i.ndc_number, MAX(b.balance_on_hand), MAX(b.unit_cost), MAX(b.inventory_value)
+        FROM inventory i
+        LEFT JOIN balance b ON i.ndc_number = b.ndc_number
+        WHERE b.inventory_value IS NOT NULL
+        GROUP BY i.ndc_number, i.drug_name
+        ORDER BY {sort_column} {sort_order}
+        """
+        cursor.execute(query)
+        rows = cursor.fetchall()
 
-    rows = cursor.fetchall()
+        # Calculate total inventory value and item count safely
+        total_inventory_value = sum(row[4] for row in rows if len(row) > 4 and row[4] is not None)
+        inventory_items_count = len(rows)
 
-    # Calculate total inventory value and item count safely
-    total_inventory_value = sum(row[4] for row in rows if row[4] is not None)
-    inventory_items_count = len(rows)
+    except mysql.connector.errors.ProgrammingError as e:
+        print(f"SQL Error: {e}")
+        return [], 0, 0  # Return empty data on error
 
     return rows, total_inventory_value, inventory_items_count
-
-
 
 
 
