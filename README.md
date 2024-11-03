@@ -26,7 +26,6 @@ A web-based application designed to manage patient information, medication recor
   
 - **Patient**
     - **Add Doctor** to the medication list table.
-    - Success and expiration messages for actions.
     - **Inactive Option (I#)**: View-only mode that greys out medications without allowing edits or deletions.
     - **Delete Function (D#)** and **View Details Function (V#)** options in the patient profile search bar, along with **Edit Function (E#)**.
     - For **View Profile**: Additional columns for refills remaining and quantity remaining (prescribed + dispensed quantity).
