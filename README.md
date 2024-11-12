@@ -5,7 +5,7 @@ A web-based application designed to manage patient information, medication recor
 
 ## **Features**
 - **Patient Management**
-    - Add, edit, view, and search patient profiles.
+    - Add, view, and search patient profiles.
     - Record allergies, conditions, and personal information.
   
 - **Medication Management**
@@ -25,6 +25,7 @@ A web-based application designed to manage patient information, medication recor
     - **Add New Employee**: Allows admins to add employees with specific privileges. Once configured, only admins will see this button.
   
 - **Patient**
+    - **Add Edit Patient** as an option to the patient search results.
     - **Add Doctor** to the medication list table.
     - **Inactive Option (I#)**: View-only mode that greys out medications without allowing edits or deletions.
     - **Delete Function (D#)** and **View Details Function (V#)** options in the patient profile search bar, along with **Edit Function (E#)**.
