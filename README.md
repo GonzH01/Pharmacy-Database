@@ -5,7 +5,7 @@ A web-based application designed to manage patient information, medication recor
 
 
 **Quick Demo**
-[![Watch the video](https://github.com/user-attachments/assets/59e16c11-83f3-4b63-8e25-a11016afbdc8)]
+https://github.com/user-attachments/assets/59e16c11-83f3-4b63-8e25-a11016afbdc8
 
 
 
