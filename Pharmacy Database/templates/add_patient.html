@@ -112,18 +112,18 @@
 <body>
     <h1 style="text-align: center;">Add New Patient</h1>
 
-    <form method="POST" action="{{ url_for('add_patient') }}">
+    <form method="POST" action="{{ url_for('add_patient') }}" autocomplete="off">
         <label for="first_name">First Name: (Max 15 characters)</label>
-        <input type="text" id="first_name" name="first_name" maxlength="15" required placeholder="Enter First Name">
+        <input type="text" id="first_name" name="first_name" maxlength="15" required placeholder="Enter First Name" autocomplete="off">
 
         <label for="last_name">Last Name: (Max 15 characters)</label>
-        <input type="text" id="last_name" name="last_name" maxlength="15" required placeholder="Enter Last Name">
+        <input type="text" id="last_name" name="last_name" maxlength="15" required placeholder="Enter Last Name" autocomplete="off">
 
         <!-- DOB as three separate fields -->
         <label for="dob">DOB: (MM-DD-YYYY)</label>
-        <input type="text" id="dob_month" name="dob_month" class="dob-input" maxlength="2" required placeholder="MM">
-        <input type="text" id="dob_day" name="dob_day" class="dob-input" maxlength="2" required placeholder="DD">
-        <input type="text" id="dob_year" name="dob_year" class="dob-input" maxlength="4" required placeholder="YYYY">
+        <input type="text" id="dob_month" name="dob_month" class="dob-input" maxlength="2" required placeholder="MM" autocomplete="off">
+        <input type="text" id="dob_day" name="dob_day" class="dob-input" maxlength="2" required placeholder="DD" autocomplete="off">
+        <input type="text" id="dob_year" name="dob_year" class="dob-input" maxlength="4" required placeholder="YYYY" autocomplete="off">
 
         <label for="gender">Gender:</label>
         <select id="gender" name="gender" required>
@@ -133,10 +133,10 @@
         </select>
 
         <label for="street">Street: (Max 30 characters)</label>
-        <input type="text" id="street" name="street" maxlength="30" required placeholder="Enter Street Address">
+        <input type="text" id="street" name="street" maxlength="30" required placeholder="Enter Street Address" autocomplete="off">
 
         <label for="zip_code">ZIP Code:</label>
-        <input type="text" id="zip_code" name="zip_code" required pattern="\d{5}" placeholder="Enter ZIP Code" oninput="autoFillCityState()">
+        <input type="text" id="zip_code" name="zip_code" required pattern="\d{5}" placeholder="Enter ZIP Code" oninput="autoFillCityState()" autocomplete="off">
 
         <label for="city">City:</label>
         <input type="text" id="city" name="city" readonly placeholder="City will auto-fill">
@@ -146,9 +146,9 @@
 
         <!-- Phone number as three separate inputs -->
         <label for="phone">Phone Number: (###-###-####)</label>
-        <input type="text" id="phone_area" name="phone_area" class="phone-input" maxlength="3" required placeholder="###">
-        <input type="text" id="phone_central" name="phone_central" class="phone-input" maxlength="3" required placeholder="###">
-        <input type="text" id="phone_line" name="phone_line" class="phone-input" maxlength="4" required placeholder="####">
+        <input type="text" id="phone_area" name="phone_area" class="phone-input" maxlength="3" required placeholder="###" autocomplete="off">
+        <input type="text" id="phone_central" name="phone_central" class="phone-input" maxlength="3" required placeholder="###" autocomplete="off">
+        <input type="text" id="phone_line" name="phone_line" class="phone-input" maxlength="4" required placeholder="####" autocomplete="off">
 
         <label for="delivery">Delivery Option (Yes/No):</label>
         <select id="delivery" name="delivery" required>
@@ -159,15 +159,15 @@
 
         <!-- Allergies field -->
         <label for="allergies">Allergies: (Separate by commas)</label>
-        <input type="text" id="allergies" name="allergies" placeholder="'none' or ex: aspirin,..." required>
+        <input type="text" id="allergies" name="allergies" placeholder="'none' or ex: aspirin,..." required autocomplete="off">
 
         <!-- Conditions field -->
         <label for="conditions">Conditions: (Separate by commas)</label>
-        <input type="text" id="conditions" name="conditions" placeholder="'none' or ex: diabetes,..." required>
+        <input type="text" id="conditions" name="conditions" placeholder="'none' or ex: diabetes,..." required autocomplete="off">
 
         <!-- Credentials entry -->
         <label for="credentials">Credentials: (4-Digit Code)</label>
-        <input type="text" id="credentials" name="credentials" required pattern="\d{4}" placeholder="Enter 4-Digit Code">
+        <input type="text" id="credentials" name="credentials" required pattern="\d{4}" placeholder="Enter 4-Digit Code" autocomplete="off">
 
         <!-- Submit and Cancel buttons -->
         <div class="button-group">

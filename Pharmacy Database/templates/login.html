@@ -56,7 +56,7 @@
     </style>
 </head>
 <body>
-    <form method="POST" action="{{ url_for('login') }}">
+    <form method="POST" action="{{ url_for('login') }}" autocomplete="off">
         <h1 style="text-align: center;">Login to Pharmacy Database</h1>
         
         <!-- Flash message for feedback -->
@@ -73,10 +73,10 @@
         {% endwith %}
 
         <label for="username">Username:</label>
-        <input type="text" id="username" name="username" placeholder="Enter your username" required>
+        <input type="text" id="username" name="username" placeholder="Enter your username" required autocomplete="off">
 
         <label for="password">Password:</label>
-        <input type="password" id="password" name="password" placeholder="Enter your password" required>
+        <input type="password" id="password" name="password" placeholder="Enter your password" required autocomplete="off">
 
         <button type="submit">Login</button>
     </form>

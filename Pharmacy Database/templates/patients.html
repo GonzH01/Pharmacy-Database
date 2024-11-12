@@ -62,12 +62,10 @@
         }
     </style>
     <script>
-        // Function to show success message if URL contains success=true
         function showPatientAddedMessage() {
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('success') === 'true') {
                 alert('Patient Successfully Added!');
-                // Remove the success parameter from the URL to prevent repeated alerts on page reload
                 history.replaceState(null, '', window.location.pathname);
             }
         }
@@ -79,7 +77,6 @@
             var dob = document.getElementById("dob").value.trim();
             var phone = document.getElementById("phone").value.trim();
 
-            // Validate name: Expecting 'Last, First' format with at least 3 characters for both first and last names
             if (name) {
                 var nameParts = name.split(',');
                 if (nameParts.length != 2 || nameParts[0].trim().length < 3 || nameParts[1].trim().length < 3) {
@@ -88,13 +85,11 @@
                 }
             }
 
-            // Reformat DOB from MMDDYYYY to YYYYMMDD if provided
             if (dob && dob.length === 8) {
-                var dobReformatted = dob.substring(4, 8) + dob.substring(0, 2) + dob.substring(2, 4);  // Reformat MMDDYYYY to YYYYMMDD
+                var dobReformatted = dob.substring(4, 8) + dob.substring(0, 2) + dob.substring(2, 4);
                 document.getElementById("dob").value = dobReformatted;
             }
 
-            // Ensure that either Name + DOB or Phone is entered (but not both)
             if ((name && dob && !phone) || (phone && !name && !dob)) {
                 return true;
             }
@@ -107,28 +102,24 @@
 <body>
     <div class="container">
         <h1>Manage Patients</h1>
-        <form method="POST" action="{{ url_for('search_patient') }}" onsubmit="return validateForm();">
+        <form method="POST" action="{{ url_for('search_patient') }}" onsubmit="return validateForm();" autocomplete="off">
             <label for="name">Search by Name: (Last, First)</label>
-            <input type="text" id="name" name="name" placeholder="Doe,Jane (no space & minimum 3 characters)">
+            <input type="text" id="name" name="name" placeholder="Doe,Jane (no space & minimum 3 characters)" autocomplete="off">
 
             <label for="dob">Search by DOB: (MMDDYYYY)</label>
-            <input type="text" id="dob" name="dob" maxlength="8" pattern="\d{8}" placeholder="Enter DOB">
+            <input type="text" id="dob" name="dob" maxlength="8" pattern="\d{8}" placeholder="Enter DOB" autocomplete="off">
 
             <label for="phone">Or Search by Phone Number (10 digits)</label>
-            <input type="text" id="phone" name="phone" maxlength="10" pattern="\d{10}" placeholder="Phone Number">
+            <input type="text" id="phone" name="phone" maxlength="10" pattern="\d{10}" placeholder="Phone Number" autocomplete="off">
 
             <label for="credentials">Credentials: (4-Digit Code)</label>
-            <input type="text" id="credentials" name="credentials" required pattern="\d{4}" maxlength="4">
+            <input type="text" id="credentials" name="credentials" required pattern="\d{4}" maxlength="4" autocomplete="off">
 
             <button type="submit" class="button">Search Patient</button>
         </form>
 
-        <!-- Button Group for Add New Patient and Back to Main Menu -->
         <div class="button-group">
-            <!-- Add New Patient Button -->
             <a href="{{ url_for('add_patient') }}" class="button">Add New Patient</a>
-
-            <!-- Back to Main Menu Button -->
             <a href="{{ url_for('main_menu') }}" class="button cancel-button">Back to Main Menu</a>
         </div>
     </div>

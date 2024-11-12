@@ -7,18 +7,21 @@ from scripts.patient_m import (
 from scripts.inventory_m import (
     create_tables_and_input_data, 
     view_inventory_table, 
-    update_balance, 
+    update_balance_table, 
     get_drug_by_ndc, 
     check_ndc_in_inventory, 
-    export_inventory_to_csv
+    export_inventory_to_csv  
 )
 from connect_to_database import connect_to_database, database_exists, create_database, selected_database
+from io import StringIO
+import csv
 import random
 from datetime import datetime, timedelta
 import os
 import webbrowser
 import threading
 import time
+
 
 
 # Global variables for MySQL credentials, database name, and credential storage
@@ -35,14 +38,30 @@ def selected_database():
 def get_database_credentials():
     global db_name, mysql_user, mysql_password
 
+    # Prompt for MySQL username and password
     mysql_user = input("Enter MySQL username: ").strip()
     mysql_password = input("Enter MySQL password: ").strip()
+
+    # Attempt to verify connection with given username and password
+    try:
+        # Attempt a connection to MySQL without specifying a database
+        connection = connect_to_database(mysql_user, mysql_password)
+        connection.close()  # Close immediately if successful
+    except Exception as e:
+        # If connection fails, show error and exit immediately
+        print(f"Connection invalid: {e}")
+        print("Incorrect username/password. Please try again.")
+        exit()  # Exit the program if the credentials are invalid
+
+    # If credentials are valid, proceed to ask for database name
     db_name = input("Name of Database: ").strip()
 
+    # Check if the database exists
     if database_exists(mysql_user, mysql_password, db_name):
         print(f"Database '{db_name}' exists.")
         credentials_code, expiration_time = generate_credentials(mysql_user, mysql_password, db_name)
     else:
+        # Handle case where database does not exist
         create_new = input(f"Database '{db_name}' does not exist. Do you want to create a new database? (y/n): ").strip().lower()
         if create_new == 'y':
             if create_database(mysql_user, mysql_password, db_name):
@@ -55,7 +74,6 @@ def get_database_credentials():
             print("Exiting without creating a database.")
             exit()
 
-    open_browser()
 
 
 
@@ -95,15 +113,15 @@ def generate_credentials(username, password, db_name):
 
 
 
-# Remove expired credentials
+# Regularly clean up expired credentials to enhance security
 def cleanup_expired_credentials():
-    global credentials_storage  # Ensure we're modifying the global dictionary
-
+    global credentials_storage
     current_time = datetime.now()
     to_remove = [key for key, value in credentials_storage.items() if value['expires_at'] < current_time]
     
     for key in to_remove:
         del credentials_storage[key]
+
 
 def verify_credentials(entered_credentials):
     # Fetch the stored credentials based on the entered ones
@@ -115,15 +133,23 @@ def verify_credentials(entered_credentials):
     return user_info
 
 
+# Ensure no caching for sensitive data
+@app.after_request
+def add_security_headers(response):
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
+
 
 @app.route('/', methods=['GET', 'POST'])
 def login():
     cleanup_expired_credentials()  # Clean up expired credentials on login
 
     if request.method == 'POST':
-        # Get the username and password from the form
-        username = request.form['username']
-        password = request.form['password']
+        # Get the username and password from the form without modifying it
+        username = request.form.get('username')
+        password = request.form.get('password')
         
         # Try connecting to the database
         mydb = connect_to_database(username, password)
@@ -135,6 +161,7 @@ def login():
             flash("Incorrect Username/Password", category="login")
     
     return render_template('login.html')
+
 
 
 # Main Menu Route
@@ -226,10 +253,10 @@ def add_patient():
 
 @app.route('/search_patient', methods=['POST'])
 def search_patient():
-    name = request.form.get('name', None)
-    dob = request.form.get('dob', None)
-    phone = request.form.get('phone', None)
-    entered_credentials = request.form['credentials']
+    name = request.form.get('name')
+    dob = request.form.get('dob')
+    phone = request.form.get('phone')
+    entered_credentials = request.form.get('credentials')  # Use get() to retrieve credentials without modifying request.form
 
     user_info = verify_credentials(entered_credentials)
     if not user_info or 'db_name' not in user_info:
@@ -239,12 +266,13 @@ def search_patient():
     matching_patients = search_patients(
         user_info['username'],
         user_info['password'],
-        user_info['db_name'],  # Pass db_name for database connection
+        user_info['db_name'], 
         name=name,
         dob=dob,
         phone=phone
     )
 
+    # Render results without clearing request.form
     return render_template('search_results.html', patients=matching_patients)
 
 
@@ -313,14 +341,15 @@ def check_med():
 
     cursor = mydb.cursor(dictionary=True)
 
-    # Query to find medications matching the name and strength with balance on hand
+    # Query to find unique medications matching the name and strength, with aggregated BOH
     cursor.execute("""
-        SELECT i.ndc_number AS ndc, i.drug_name AS name, i.strength, 
-               COALESCE(b.balance_on_hand, 0) AS balance_on_hand
+        SELECT i.drug_name AS name, i.ndc_number AS ndc, i.strength, 
+               COALESCE(SUM(b.balance_on_hand), 0) AS balance_on_hand
         FROM inventory i
         LEFT JOIN balance b ON i.ndc_number = b.ndc_number
         WHERE i.drug_name LIKE %s AND i.strength = %s
-        ORDER BY b.balance_on_hand DESC
+        GROUP BY i.ndc_number, i.drug_name, i.strength
+        ORDER BY balance_on_hand DESC
         LIMIT 10
     """, (f"{med_name[:3]}%", strength))
 
@@ -330,8 +359,6 @@ def check_med():
         return jsonify({'error': 'No matching medications found.'}), 404
 
     return jsonify({'meds': meds})
-
-
 
 
 
@@ -435,7 +462,7 @@ def edit_rx(id, patient_id):
     med = mycursor.fetchone()
     return render_template('edit_rx.html', med=med, id=id, patient_id=patient_id)
 
-
+# Define the get_drug_by_ndc function with the updated inventory schema
 def get_drug_by_ndc(ndc, username=None, password=None):
     mydb = connect_to_database(username, password)
     if not mydb:
@@ -443,14 +470,13 @@ def get_drug_by_ndc(ndc, username=None, password=None):
 
     cursor = mydb.cursor(dictionary=True)
     cursor.execute("""
-    SELECT drug_name, strength, dosage_form, manufacturer_name, unit_price, phone_number, email, fax, description, 
-           storage_requirements, controlled_substance_status, (quantity * quantity_per_unit) AS balance_on_hand
+    SELECT drug_name, strength, dosage_form, manufacturer_name, unit_price, 
+           phone_number, email, fax, controlled_substance_status, 
+           (quantity * quantity_per_unit) AS balance_on_hand
     FROM inventory WHERE ndc_number = %s
     """, (ndc,))
     result = cursor.fetchone()
-
     return result
-
 
 @app.route('/check_ndc', methods=['GET'])
 def check_ndc():
@@ -460,7 +486,7 @@ def check_ndc():
     if not ndc or not credentials:
         return jsonify({'error': 'Invalid NDC or credentials.'}), 400
 
-    # Retrieve user credentials
+    # Verify credentials
     user_info = verify_credentials(credentials)
     if not user_info:
         return jsonify({'error': 'Invalid or expired credentials.'}), 400
@@ -468,9 +494,8 @@ def check_ndc():
     username = user_info['username']
     password = user_info['password']
 
-    # Call the function to check NDC in the database
+    # Check NDC in the database
     drug_details = check_ndc_in_inventory(ndc, username, password)
-
     if drug_details:
         return jsonify({
             'exists': True,
@@ -482,65 +507,63 @@ def check_ndc():
             'phone_number': str(drug_details.get('phone_number', '')),
             'email': drug_details.get('email', ''),
             'fax': str(drug_details.get('fax', '')),
-            'description': drug_details.get('description', ''),
-            'storage_requirements': drug_details.get('storage_requirements', ''),
             'controlled_substance_status': drug_details.get('controlled_substance_status', '')
         })
     else:
         return jsonify({'exists': False})
 
-
+# Ensure balance is updated when adding or modifying medications in inventory
 @app.route('/add_med', methods=['GET', 'POST'])
 def add_med():
     if request.method == 'POST':
-        # Get form data including credentials
-        ndc = request.form['ndc']
-        drug_name = request.form['drug_name']
-        dosage_form = request.form['dosage_form']
-        strength = request.form['strength']
-        quantity = int(request.form['quantity'])
-        quantity_per_unit = int(request.form['quantity_per_unit'])
-        expiration_date = request.form['expiration_date']
-        lot_number = request.form['lot_number']
-        manufacturer_name = request.form['manufacturer_name']
-        unit_price = float(request.form['unit_price'])
-        phone_number = request.form['phone_number']
-        email = request.form['email']
-        fax = request.form['fax']
-        description = request.form['description']
-        storage_requirements = request.form['storage_requirements']
-        controlled_substance_status = request.form['controlled_substance_status']
-        allergies_warnings = request.form['allergies_warnings']
-        credentials = request.form['credentials']
+        try:
+            # Retrieve form data, including credentials
+            ndc = request.form['ndc']
+            drug_name = request.form['drug_name']
+            dosage_form = request.form['dosage_form']
+            strength = request.form['strength']
+            quantity = int(request.form['quantity'])
+            quantity_per_unit = int(request.form['quantity_per_unit'])
+            expiration_date = request.form['expiration_date']
+            lot_number = request.form['lot_number']
+            manufacturer_name = request.form['manufacturer_name']
+            unit_price = float(request.form['unit_price'])
+            phone_number = request.form['phone_number']
+            email = request.form['email']
+            fax = request.form['fax']
+            controlled_substance_status = request.form['controlled_substance_status']
+            credentials = request.form['credentials']
 
-        # Verify credentials before proceeding
-        user_info = verify_credentials(credentials)
-        if not user_info:
-            flash("Invalid or expired credentials. Please try again.")
+            # Verify credentials
+            user_info = verify_credentials(credentials)
+            if not user_info:
+                flash("Invalid or expired credentials. Please try again.")
+                return redirect(url_for('add_med'))
+
+            # Connect and insert data
+            username = user_info['username']
+            password = user_info['password']
+            result = create_tables_and_input_data(
+                ndc, drug_name, dosage_form, strength, quantity, quantity_per_unit,
+                expiration_date, lot_number, manufacturer_name, unit_price,
+                phone_number, email, fax, controlled_substance_status, username, password
+            )
+
+            if "Error connecting to the database" in result:
+                flash(result, 'error')
+                return redirect(url_for('add_med'))
+
+            # Update balance after inserting a new medication
+            update_balance_table(username, password)
+
+            return redirect(url_for('inventory', success='true'))
+
+        except Exception as e:
+            flash(f"An error occurred: {e}")
+            print(f"Error adding medication: {e}")
             return redirect(url_for('add_med'))
-
-        # Use the verified username and password for database operations
-        username = user_info['username']
-        password = user_info['password']
-
-        # Add medication to inventory
-        result = create_tables_and_input_data(
-            ndc, drug_name, dosage_form, strength, quantity, quantity_per_unit,
-            expiration_date, lot_number, manufacturer_name, unit_price,
-            phone_number, email, fax, description, storage_requirements,
-            controlled_substance_status, allergies_warnings, username, password
-        )
-
-        if "Error connecting to the database" in result:
-            flash(result, 'error')
-            return redirect(url_for('add_med'))
-
-        # Redirect with success flag for JavaScript alert
-        return redirect(url_for('inventory', success='true'))
 
     return render_template('add_med.html')
-
-
 
 
 
@@ -575,26 +598,34 @@ def inventory():
 
 @app.route('/view_inventory', methods=['GET', 'POST'])
 def view_inventory():
-    # Use request.form for POST or request.args for GET
-    if request.method == 'POST':
-        credentials = request.form.get('credentials')
-    else:  # method is GET
-        credentials = request.args.get('credentials')
+    # Get credentials based on the request method
+    credentials = request.form.get('credentials') if request.method == 'POST' else request.args.get('credentials')
     
+    # Set sorting parameters with default values
     sort_by = request.args.get('sort_by', 'boh')
     sort_order = request.args.get('sort_order', 'desc')
 
-    # Verify credentials
+    # Verify credentials before accessing the database
     user_info = verify_credentials(credentials)
     if not user_info:
         flash("Invalid or expired credentials. Please log in again.")
         return redirect(url_for('inventory'))
+
+    # Auto-update balance table before viewing inventory
+    update_balance_table(user_info['username'], user_info['password'])
 
     # Fetch inventory data with sorting
     inventory_data, total_inventory_value, inventory_items_count = view_inventory_table(
         user_info['username'], user_info['password'], sort_by, sort_order
     )
 
+    # Debugging output to confirm data retrieval
+    if not inventory_data:
+        print("No inventory data retrieved or issue with query.")
+    else:
+        print(f"Inventory Data Retrieved: {len(inventory_data)} items")
+
+    # Render the template with inventory data and totals
     return render_template(
         'view_inventory.html',
         inventory=inventory_data,
@@ -603,30 +634,39 @@ def view_inventory():
     )
 
 
-
-# Route to download inventory as CSV
 @app.route('/download_inventory_csv', methods=['POST'])
 def download_inventory_csv():
     entered_credentials = request.form.get('credentials')
 
-    # Verify credentials before accessing the database
-    user_info = verify_credentials(entered_credentials)
+    # Check if credentials were provided
+    if not entered_credentials:
+        flash("Credentials are required to download the CSV.")
+        return redirect(url_for('view_inventory'))
+
+    # Verify credentials
+    try:
+        user_info = verify_credentials(entered_credentials)
+    except ValueError:
+        flash("Invalid credentials format. Please enter valid numeric credentials.")
+        return redirect(url_for('view_inventory'))
+
     if not user_info:
         flash("Invalid or expired credentials. Please try again.")
         return redirect(url_for('view_inventory'))
 
     # Fetch inventory data
-    inventory_data = view_inventory_table(user_info['username'], user_info['password'])
+    inventory_data, total_inventory_value, inventory_items_count = view_inventory_table(
+        user_info['username'], user_info['password']
+    )
 
-    # Create CSV content from the inventory data
-    csv_content = export_inventory_to_csv(inventory_data, 'inventory_data.csv')
+    # Generate CSV content in memory
+    csv_content = export_inventory_to_csv(inventory_data)
+    if not csv_content:
+        flash("Failed to generate CSV content.")
+        return redirect(url_for('view_inventory'))
 
-    # Read the CSV content
-    with open('inventory_data.csv', 'r', encoding='utf-8') as file:
-        csv_data = file.read()
-
-    # Create a response for downloading the CSV
-    response = make_response(csv_data)
+    # Create a response for CSV download
+    response = make_response(csv_content)
     response.headers['Content-Disposition'] = 'attachment; filename=inventory_data.csv'
     response.headers['Content-Type'] = 'text/csv'
 
@@ -658,8 +698,8 @@ if __name__ == '__main__':
     # Prompt the user for the database credentials before running the app
     get_database_credentials()
     
-    # Start a new thread to open the browser
+    # Start a new thread to open the browser once the server is ready
     threading.Thread(target=open_browser, daemon=True).start()
 
-    # Start the Flask app
-    app.run(debug=True, use_reloader=False)  # Disable reloader to avoid restarting
+    # Start the Flask app without debug mode
+    app.run(use_reloader=False)

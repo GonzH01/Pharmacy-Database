@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Search Results</title>
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -74,7 +77,6 @@
                 <td>{{ patient[0] }}</td>
                 <td>{{ patient[2] }}</td>
                 <td>{{ patient[1] }}</td>
-                <!-- Format DOB from 'YYYY-MM-DD' to 'MM/DD/YYYY' -->
                 <td>
                     {% if patient[3] %}
                         {{ patient[3].strftime('%m/%d/%Y') }}
@@ -85,7 +87,7 @@
                 <td>{{ patient[6] if patient[6] else 'N/A' }}</td> <!-- City -->
                 <td>{{ patient[7] if patient[7] else 'N/A' }}</td> <!-- State -->
                 <td>
-                    <form action="{{ url_for('view_patient', patient_id=patient[0]) }}" method="POST">
+                    <form action="{{ url_for('view_patient', patient_id=patient[0]) }}" method="POST" autocomplete="off">
                         <input type="hidden" name="credentials" value="{{ request.form['credentials'] }}">
                         <button type="submit" class="button">View Profile</button>
                     </form>

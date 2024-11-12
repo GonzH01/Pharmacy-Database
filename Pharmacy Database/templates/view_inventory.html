@@ -4,20 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>View Inventory</title>
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <style>
+        /* Styling */
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
             background-color: #f4f4f4;
         }
-
         h1 {
             text-align: center;
             margin-bottom: 20px;
             color: #333;
             font-size: 24px;
         }
-
         .header-stats {
             display: flex;
             justify-content: space-between;
@@ -26,27 +28,23 @@
             font-size: 18px;
             font-weight: bold;
         }
-
         .filter-section {
             margin: 20px 0;
             display: flex;
             align-items: center;
             justify-content: center;
         }
-
         .filter-section label {
             margin-right: 10px;
             font-weight: bold;
             font-size: 16px;
         }
-
         .filter-section input {
             padding: 8px;
             margin-right: 15px;
             border: 1px solid #ccc;
             border-radius: 5px;
         }
-
         table {
             width: 100%;
             border-collapse: collapse;
@@ -54,20 +52,17 @@
             background-color: #fff;
             box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
         }
-
         th, td {
             padding: 12px;
             border: 1px solid #ccc;
             text-align: center;
             font-size: 14px;
         }
-
         th {
             background-color: #e7e7e7;
             color: #333;
             font-weight: bold;
         }
-
         .button {
             padding: 10px 20px;
             font-size: 16px;
@@ -76,43 +71,31 @@
             border: none;
             margin: 5px;
         }
-
         .filter-button {
             background-color: #4CAF50;
             color: white;
         }
-
         .filter-button:hover {
             background-color: #45a049;
         }
-
         .cancel-button {
             background-color: #f44336;
             color: white;
         }
-
         .cancel-button:hover {
             background-color: #d32f2f;
         }
-
         .save-button {
             background-color: #2196F3;
             color: white;
         }
-
         .save-button:hover {
             background-color: #1E88E5;
         }
-
         .button-group {
             display: flex;
             justify-content: space-between;
             margin-top: 20px;
-        }
-
-        .action-buttons {
-            display: flex;
-            justify-content: center;
         }
     </style>
 </head>
@@ -126,25 +109,15 @@
     </div>
 
     <!-- Filter and Credentials Section -->
-    <form method="GET" action="{{ url_for('view_inventory') }}">
+    <form method="GET" action="{{ url_for('view_inventory') }}" autocomplete="off">
         <div class="filter-section">
             <label for="credentials">Enter Credentials:</label>
             <input type="text" id="credentials" name="credentials" maxlength="4" pattern="\d{4}" required>
-
-            <!-- Sorting Buttons -->
             <div class="action-buttons">
-                <button type="submit" name="sort_by" value="boh" class="button filter-button" onclick="document.getElementById('sort_order').value='desc';">
-                    High to Low BOH
-                </button>
-                <button type="submit" name="sort_by" value="unit_price" class="button filter-button" onclick="document.getElementById('sort_order').value='desc';">
-                    High to Low Unit Price
-                </button>
-                <button type="submit" name="sort_by" value="inventory_value" class="button filter-button" onclick="document.getElementById('sort_order').value='desc';">
-                    High to Low Inventory Value
-                </button>
+                <button type="submit" name="sort_by" value="boh" class="button filter-button">High to Low BOH</button>
+                <button type="submit" name="sort_by" value="unit_price" class="button filter-button">High to Low Unit Price</button>
+                <button type="submit" name="sort_by" value="inventory_value" class="button filter-button">High to Low Inventory Value</button>
             </div>
-
-            <!-- Hidden Input for Sort Order -->
             <input type="hidden" id="sort_order" name="sort_order" value="desc">
         </div>
     </form>
@@ -155,6 +128,7 @@
             <tr>
                 <th>Drug Name</th>
                 <th>NDC Number</th>
+                <th>Strength</th>
                 <th>Balance on Hand</th>
                 <th>Unit Cost</th>
                 <th>Inventory Value</th>
@@ -163,20 +137,22 @@
         <tbody>
             {% for med in inventory %}
             <tr>
-                <td>{{ med[0] if med[0] is not none else 'N/A' }}</td> <!-- Drug Name -->
-                <td>{{ med[1] if med[1] is not none else 'N/A' }}</td> <!-- NDC Number -->
-                <td>{{ med[2] if med[2] is not none else 0 }}</td> <!-- Balance on Hand -->
-                <td>${{ "%.2f"|format(med[3]) if med[3] is not none else '0.00' }}</td> <!-- Unit Cost -->
-                <td>${{ "%.2f"|format(med[4]) if med[4] is not none else '0.00' }}</td> <!-- Inventory Value -->
+                <td>{{ med[0] if med[0] is not none else 'N/A' }}</td>
+                <td>{{ med[1] if med[1] is not none else 'N/A' }}</td>
+                <td>{{ med[2] if med[2] is not none else 'N/A' }}</td>
+                <td>{{ med[3] if med[3] is not none else 0 }}</td>
+                <td>${{ "%.2f"|format(med[4]) if med[4] is not none else '0.00' }}</td>
+                <td>${{ "%.2f"|format(med[5]) if med[5] is not none else '0.00' }}</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 
-    <!-- Save as CSV and Cancel Buttons -->
+    <!-- Save as CSV and Cancel Buttons with CSV Credentials -->
     <div class="button-group">
-        <form method="POST" action="{{ url_for('download_inventory_csv') }}">
-            <input type="hidden" name="credentials" value="{{ request.args.get('credentials', '') }}">
+        <form method="POST" action="{{ url_for('download_inventory_csv') }}" autocomplete="off">
+            <label for="csv_credentials">4- Digit Credentials:</label>
+            <input type="text" id="csv_credentials" name="credentials" maxlength="4" pattern="\d{4}" required>
             <button type="submit" class="button save-button">Save as CSV</button>
         </form>
         <a href="{{ url_for('inventory') }}" class="button cancel-button">Cancel</a>

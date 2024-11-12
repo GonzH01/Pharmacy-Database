@@ -104,8 +104,8 @@
 
         <!-- Form for entering credentials and viewing inventory -->
         <div class="form-inline">
-            <form method="POST" action="{{ url_for('view_inventory') }}">
-                <input type="text" name="credentials" class="input-field" maxlength="4" pattern="\d{4}" placeholder="Enter 4-digit credentials" required>
+            <form method="POST" action="{{ url_for('view_inventory') }}" autocomplete="off">
+                <input type="text" name="credentials" class="input-field" maxlength="4" pattern="\d{4}" placeholder="Enter 4-digit credentials" required autocomplete="off">
                 <button type="submit" class="button">View Inventory</button>
             </form>
         </div>

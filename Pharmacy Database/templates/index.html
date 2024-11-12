@@ -118,7 +118,16 @@
         // Close the credential bubble
         function closeBubble() {
             document.getElementById('credential-bubble').classList.add('bubble-hidden');
+            // Clear credentials from the page for added security
+            document.getElementById('credential-bubble').innerHTML = "";
         }
+
+        // Clear the bubble content on sign-off for privacy
+        document.addEventListener("DOMContentLoaded", function() {
+            document.querySelector(".sign-off-btn").addEventListener("click", function() {
+                closeBubble();
+            });
+        });
     </script>
 </head>
 <body>

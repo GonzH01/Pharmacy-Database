@@ -1,2 +1,0 @@
-Drug Name,NDC Number,Balance on Hand,Unit Cost,Inventory Value
-"('omeprazole', '76666666666', 2700, Decimal('1.23'), Decimal('3321.00'))","('trazadone', '11111111111', 2700, Decimal('0.39'), Decimal('1053.00'))","('gabapentin', '34243242342', 2700, Decimal('1.44'), Decimal('3888.00'))","('jardiance', '23442333333', 2070, Decimal('1.88'), Decimal('3891.60'))","('amlodipine', '33333333343', 1200, Decimal('0.63'), Decimal('756.00'))"

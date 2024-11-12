@@ -1,11 +1,12 @@
 import mysql.connector
 from mysql.connector import Error
+from typing import Optional
 
 # Global variable to store the selected database name
-selected_database = None
+selected_database: Optional[str] = None
 
-def connect_to_database(username, password, db_name=None):
-    """Connect to the MySQL server and optionally a specific database."""
+def connect_to_database(username: str, password: str, db_name: Optional[str] = None) -> Optional[mysql.connector.connection.MySQLConnection]:
+    """Connect to the MySQL server and optionally to a specific database."""
     global selected_database
 
     # Set the global selected_database if db_name is provided
@@ -25,7 +26,7 @@ def connect_to_database(username, password, db_name=None):
         print(f"Error connecting to MySQL: {e}")
         return None
 
-def database_exists(username, password, db_name):
+def database_exists(username: str, password: str, db_name: str) -> bool:
     """Check if a database exists."""
     global selected_database
     mydb = connect_to_database(username, password)
@@ -33,17 +34,23 @@ def database_exists(username, password, db_name):
         return False
 
     cursor = mydb.cursor()
-    cursor.execute("SHOW DATABASES")
-    databases = cursor.fetchall()
-    cursor.close()
+    try:
+        cursor.execute("SHOW DATABASES")
+        databases = cursor.fetchall()
 
-    # Check if the specified database exists
-    if any(db[0] == db_name for db in databases):
-        selected_database = db_name  # Set the global selected_database
-        return True
-    return False
+        # Check if the specified database exists
+        if any(db[0] == db_name for db in databases):
+            selected_database = db_name  # Set the global selected_database
+            return True
+        return False
+    except Error as e:
+        print(f"Error checking if database exists: {e}")
+        return False
+    finally:
+        cursor.close()
+        mydb.close()
 
-def create_database(username, password, db_name):
+def create_database(username: str, password: str, db_name: str) -> bool:
     """Create a new database."""
     global selected_database
     mydb = connect_to_database(username, password)
@@ -52,7 +59,7 @@ def create_database(username, password, db_name):
 
     cursor = mydb.cursor()
     try:
-        cursor.execute(f"CREATE DATABASE {db_name}")
+        cursor.execute(f"CREATE DATABASE `{db_name}`")  # Use backticks for database name to prevent injection
         print(f"Database '{db_name}' created successfully.")
         selected_database = db_name  # Set the global selected_database
         return True
@@ -61,3 +68,4 @@ def create_database(username, password, db_name):
         return False
     finally:
         cursor.close()
+        mydb.close()

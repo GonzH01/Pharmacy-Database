@@ -167,7 +167,8 @@
             if (medName.length >= 3 && strength && credentials.length === 4) {
                 try {
                     const response = await fetch(`/check_med?med_name=${medName}&strength=${strength}&credentials=${credentials}`, {
-                        method: 'GET'
+                        method: 'GET',
+                        cache: 'no-store'  // Disable caching to prevent saving searches
                     });
         
                     if (!response.ok) {
@@ -218,21 +219,18 @@
                 alert('Please enter at least 3 letters of the medication name, a valid strength, and a valid 4-digit credential.');
             }
         }
-        
 
         function setMedication(ndc, drugName, strength) {
             document.getElementById('ndc_number').value = ndc;
             document.getElementById('drug').value = drugName;
             document.getElementById('selected_strength').value = strength;  // Save strength to hidden field
-            console.log("Selected Medication:", { ndc, drugName, strength });
         }
 
         function validateForm() {
             const ndcNumber = document.getElementById('ndc_number').value;
             const drug = document.getElementById('drug').value;
-            const strength = document.getElementById('selected_strength').value;  // Use selected_strength for validation
+            const strength = document.getElementById('selected_strength').value;
 
-            console.log("Form Submission Values:", { ndcNumber, drug, strength });
             if (!ndcNumber || !drug || !strength) {
                 alert("Please select a medication from the list before submitting.");
                 return false;
@@ -244,48 +242,48 @@
 <body>
     <h1>Add New Prescription</h1>
 
-    <form method="POST" action="{{ url_for('add_rx', patient_id=patient_id) }}" onsubmit="return validateForm()">
+    <form method="POST" action="{{ url_for('add_rx', patient_id=patient_id) }}" onsubmit="return validateForm()" autocomplete="off">
         <div class="med-group">
             <label for="med_name">Drug Name:</label>
-            <input type="text" id="med_name" name="med_name" maxlength="255" required placeholder="3 letters minimum">
+            <input type="text" id="med_name" name="med_name" maxlength="255" required placeholder="3 letters minimum" autocomplete="off">
             
             <label for="strength">Strength:</label>
-            <input type="text" id="strength" name="strength" required placeholder="e.g., 500mg">
+            <input type="text" id="strength" name="strength" required placeholder="e.g., 500mg" autocomplete="off">
         </div>
 
         <input type="hidden" id="ndc_number" name="ndc_number">
         <input type="hidden" id="drug" name="drug">
-        <input type="hidden" id="selected_strength" name="strength">  <!-- Updated field name to "strength" -->
+        <input type="hidden" id="selected_strength" name="strength"> 
 
         <div class="credentials-group">
-            <input type="text" id="credentials" name="credentials" maxlength="4" pattern="\d{4}" required placeholder="4-digit Credentials">
+            <input type="text" id="credentials" name="credentials" maxlength="4" pattern="\d{4}" required placeholder="4-digit Credentials" autocomplete="off">
             <button type="button" class="button submit-button" onclick="checkMed()">Check Med</button>
             <a href="{{ url_for('add_med') }}" class="button add-med-button">Add New Med</a>
         </div>
 
         <label for="sig">Directions (Max 150 characters):</label>
-        <textarea id="sig" name="sig" maxlength="150" required></textarea>
+        <textarea id="sig" name="sig" maxlength="150" required autocomplete="off"></textarea>
 
         <label for="quantity">Quantity:</label>
-        <input type="text" id="quantity" name="quantity" maxlength="6" pattern="\d{1,6}" required>
+        <input type="text" id="quantity" name="quantity" maxlength="6" pattern="\d{1,6}" required autocomplete="off">
 
         <label for="days_supply">Days Supply:</label>
-        <input type="text" id="days_supply" name="days_supply" maxlength="6" pattern="\d{1,6}" required>
+        <input type="text" id="days_supply" name="days_supply" maxlength="6" pattern="\d{1,6}" required autocomplete="off">
 
         <label for="refills">Refills:</label>
-        <input type="text" id="refills" name="refills" maxlength="3" pattern="\d{1,3}" required>
+        <input type="text" id="refills" name="refills" maxlength="3" pattern="\d{1,3}" required autocomplete="off">
 
         <label for="date_written">Date Written (YYYY-MM-DD):</label>
-        <input type="date" id="date_written" name="date_written" required onchange="autoFillDateExpired()">
+        <input type="date" id="date_written" name="date_written" required onchange="autoFillDateExpired()" autocomplete="off">
 
         <label for="date_expired">Date Expired (Auto-filled):</label>
         <input type="date" id="date_expired" name="date_expired" readonly>
 
         <label for="date_filled">Date Filled (YYYY-MM-DD):</label>
-        <input type="date" id="date_filled" name="date_filled" required>
+        <input type="date" id="date_filled" name="date_filled" required autocomplete="off">
 
         <label for="prescription_credentials">Enter 4-Digit Credentials to Add Prescription:</label>
-        <input type="text" id="prescription_credentials" name="prescription_credentials" maxlength="4" pattern="\d{4}" required>
+        <input type="text" id="prescription_credentials" name="prescription_credentials" maxlength="4" pattern="\d{4}" required autocomplete="off">
 
         <div class="aligned-buttons">
             <button type="submit" class="button submit-button">Add Prescription</button>

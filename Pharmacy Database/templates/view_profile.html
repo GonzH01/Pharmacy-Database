@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Patient Profile</title>
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -31,8 +34,6 @@
             background-color: #4CAF50;
             color: white;
             padding: 10px 20px;
-            text-align: center;
-            display: inline-block;
             font-size: 16px;
             margin: 10px 2px;
             cursor: pointer;
@@ -45,14 +46,13 @@
         .exit-button {
             background-color: #f44336;
             color: white;
-            text-decoration: none;
             padding: 10px 20px;
-            display: inline-block;
             font-size: 16px;
             margin: 10px 2px;
             cursor: pointer;
             border: none;
             border-radius: 5px;
+            text-decoration: none;
         }
         .exit-button:hover {
             background-color: #d32f2f;
@@ -75,6 +75,7 @@
             padding: 10px;
             font-size: 16px;
             width: 60%;
+            autocomplete: off;
         }
     </style>
 </head>
@@ -154,7 +155,7 @@
 
         <!-- Entry bar for command input (Edit Rx, etc.) -->
         <div class="entry-bar">
-            <input type="text" id="command_input" placeholder="Enter 'E#' to edit a prescription" maxlength="10">
+            <input type="text" id="command_input" placeholder="Enter 'E#' to edit a prescription" maxlength="10" autocomplete="off">
             <button onclick="processCommand()" class="button">Submit</button>
             <a href="{{ url_for('patients') }}" class="exit-button">Exit</a>
         </div>
@@ -163,18 +164,20 @@
     <script>
         function processCommand() {
             const commandInput = document.getElementById("command_input").value.toUpperCase();
-            if (commandInput.startsWith("E")) {
+            const regex = /^E\d+$/; // Only allow commands in the format "E#" where # is a number
+
+            if (regex.test(commandInput)) {
                 const index = parseInt(commandInput.slice(1), 10);
                 const rows = document.querySelectorAll("table tr[data-id]");
-                
+
                 if (!isNaN(index) && index > 0 && index <= rows.length) {
                     const medId = rows[index - 1].getAttribute("data-id");
                     window.location.href = `/edit_rx/${medId}/{{ profile[0] }}`;
                 } else {
-                    alert("Invalid command. Please enter a valid index number after 'E'.");
+                    alert("Invalid index number. Please enter a valid command.");
                 }
             } else {
-                alert("Invalid command. Please use 'E#' format to edit a prescription.");
+                alert("Invalid command format. Please use 'E#' format to edit a prescription.");
             }
         }
     </script>
