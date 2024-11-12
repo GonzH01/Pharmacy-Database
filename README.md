@@ -79,5 +79,5 @@ https://github.com/user-attachments/assets/59e16c11-83f3-4b63-8e25-a11016afbdc8
 ## **Acknowledgments**
 - Flask documentation
 - SQLAlchemy for database management
-
+- **Link to my original project:** https://github.com/G-Hugo13/Pharmacy-Database/blob/main/README.md 
 Feel free to submit issues, fork the repository, and create pull requests. Contributions are welcome! Star this repository if you wish to see more progress!
