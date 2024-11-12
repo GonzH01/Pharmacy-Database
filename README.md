@@ -3,6 +3,12 @@
 ## **Description**
 A web-based application designed to manage patient information, medication records, and inventory in a pharmacy setting. This system provides functionality for adding, viewing, editing, and removing patient and prescription details, as well as tracking medication inventory with streamlined authentication features.
 
+
+**Quick Demo**
+https://github.com/user-attachments/assets/59e16c11-83f3-4b63-8e25-a11016afbdc8
+
+
+
 ## **Features**
 - **Patient Management**
     - Add, view, and search patient profiles.
