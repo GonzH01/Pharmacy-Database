@@ -42,7 +42,7 @@ https://github.com/user-attachments/assets/59e16c11-83f3-4b63-8e25-a11016afbdc8
     - **Edit Button** and **Delete Function** for medications on the inventory list.
 
 ----------------------------------------------------------------------------------
-Update: 
+***Updates:*** 
 
 The **Inventory Management Dashboard** has been introduced to provide a **visual representation** of key inventory metrics, helping pharmacists and administrators track stock levels and trends efficiently. 
 
