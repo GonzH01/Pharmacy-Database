@@ -41,6 +41,24 @@ https://github.com/user-attachments/assets/59e16c11-83f3-4b63-8e25-a11016afbdc8
 - **Inventory**
     - **Edit Button** and **Delete Function** for medications on the inventory list.
 
+----------------------------------------------------------------------------------
+Update: 
+
+The **Inventory Management Dashboard** has been introduced to provide a **visual representation** of key inventory metrics, helping pharmacists and administrators track stock levels and trends efficiently. 
+
+### **New Features in the Dashboard:**
+- **Total Inventory Value Over Time** 📈: A line graph that tracks total inventory value fluctuations, ensuring better financial oversight.
+- **Monthly Inventory Movement** 📊: A horizontal bar chart visualizing net changes in stock balance over time.
+- **Top 5 Priced Medications** 🍵: A **donut chart** showing the five most expensive medications, with an **"Others"** category for remaining inventory.
+- **Top 5 Inventory by Quantity** 🏥: A **donut chart** displaying the five medications with the highest stock levels.
+- **Price vs. Inventory Value** ⚖: A scatter plot illustrating the relationship between unit cost and total inventory value.
+- **Monthly Statistics** 📊: Auto-updating percentage changes in **inventory stock** and **total inventory value**.
+
+These enhancements enable a **data-driven approach** to inventory tracking, allowing better stock management, forecasting, and decision-making.
+
+----------------------------------------------------------------------------------
+
+
 - **Doctor**
     - Management similar to patients, with added fields: license number (DEA + NPI), expiration date, fax, license title.
     - Licenses will dictate the doctor’s ability to fill certain prescriptions (controls/non-controls).
