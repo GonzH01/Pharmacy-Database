@@ -12,6 +12,8 @@ from scripts.inventory_m import (
     check_ndc_in_inventory, 
     export_inventory_to_csv  
 )
+from scripts.inventory_m import log_inventory_transaction  # Import function to log inventory changes
+
 from connect_to_database import connect_to_database, database_exists, create_database, selected_database
 from io import StringIO
 import csv
@@ -512,6 +514,41 @@ def check_ndc():
     else:
         return jsonify({'exists': False})
 
+def log_inventory_transaction(ndc_number, change_in_balance, transaction_type, username, password):
+    """
+    Logs inventory changes into the inventory_transactions table.
+    """
+    mydb = connect_to_database(username, password)
+    if not mydb:
+        print("Error connecting to the database.")
+        return
+
+    try:
+        with mydb.cursor() as cursor:
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS inventory_transactions (
+                    transaction_id INT AUTO_INCREMENT PRIMARY KEY,
+                    ndc_number VARCHAR(11) NOT NULL,
+                    transaction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    change_in_balance INT NOT NULL,
+                    transaction_type ENUM('restock', 'dispense', 'adjustment') NOT NULL,
+                    FOREIGN KEY (ndc_number) REFERENCES inventory(ndc_number) ON DELETE CASCADE
+                )
+            """)
+
+            sql = """
+                INSERT INTO inventory_transactions (ndc_number, change_in_balance, transaction_type)
+                VALUES (%s, %s, %s)
+            """
+            values = (ndc_number, change_in_balance, transaction_type)
+            cursor.execute(sql, values)
+            mydb.commit()
+    except Exception as e:
+        print(f"Error logging inventory transaction: {e}")
+    finally:
+        mydb.close()
+
+
 # Ensure balance is updated when adding or modifying medications in inventory
 @app.route('/add_med', methods=['GET', 'POST'])
 def add_med():
@@ -553,13 +590,17 @@ def add_med():
                 flash(result, 'error')
                 return redirect(url_for('add_med'))
 
+            # Log transaction: adding a new medication is a "restock" action
+            log_inventory_transaction(ndc, quantity, "restock", username, password)
+
             # Update balance after inserting a new medication
             update_balance_table(username, password)
 
+            flash(f"{drug_name} added successfully.", "success")
             return redirect(url_for('inventory', success='true'))
 
         except Exception as e:
-            flash(f"An error occurred: {e}")
+            flash(f"An error occurred: {e}", "error")
             print(f"Error adding medication: {e}")
             return redirect(url_for('add_med'))
 
@@ -684,6 +725,175 @@ def prescribers():
 @app.route('/patients', methods=['GET', 'POST'])
 def patients():
     return render_template('patients.html')
+
+@app.route('/dashboards', methods=['GET'])
+def dashboards():
+    credentials = request.args.get('credentials')
+    user_info = verify_credentials(credentials)
+    if not user_info:
+        flash("Invalid or expired credentials. Please log in again.")
+        return redirect(url_for('inventory'))
+
+    username = user_info['username']
+    password = user_info['password']
+
+    mydb = connect_to_database(username, password)
+    if not mydb:
+        flash("Error connecting to the database.")
+        return redirect(url_for('inventory'))
+
+    try:
+        with mydb.cursor(dictionary=True) as cursor:
+            # ✅ Total Inventory Value Over Time
+            cursor.execute("""
+                SELECT DATE(t.transaction_date) AS date, 
+                       SUM(t.change_in_balance * COALESCE(i.unit_price, 0.00)) AS total_inventory_value
+                FROM inventory_transactions t
+                LEFT JOIN inventory i ON t.ndc_number = i.ndc_number
+                GROUP BY DATE(t.transaction_date)
+                ORDER BY DATE(t.transaction_date) ASC
+            """)
+            results = cursor.fetchall()
+            dates = [row["date"].strftime('%Y-%m-%d') for row in results]
+            total_values = [row["total_inventory_value"] if row["total_inventory_value"] else 0 for row in results]
+
+            # ✅ Monthly Inventory Movement
+            cursor.execute("""
+                SELECT DATE_FORMAT(t.transaction_date, '%Y-%m') AS month, 
+                       SUM(t.change_in_balance) AS net_change
+                FROM inventory_transactions t
+                GROUP BY month
+                ORDER BY month ASC
+            """)
+            movement_results = cursor.fetchall()
+            months = [row["month"] for row in movement_results]
+            net_changes = [row["net_change"] for row in movement_results]
+
+            # ✅ Price vs. Inventory Value Scatter Data
+            cursor.execute("""
+                SELECT b.unit_cost, b.inventory_value
+                FROM balance b
+                WHERE b.inventory_value > 0
+            """)
+            scatter_results = cursor.fetchall()
+            scatter_data = [{"x": row["unit_cost"], "y": row["inventory_value"]} for row in scatter_results]
+
+            # ✅ Top 5 Priced Medications + "Other"
+            cursor.execute("""
+                SELECT i.drug_name AS label, SUM(b.unit_cost) AS value
+                FROM balance b
+                JOIN inventory i ON b.ndc_number = i.ndc_number
+                GROUP BY i.drug_name
+                ORDER BY value DESC
+                LIMIT 5
+            """)
+            top_price_results = cursor.fetchall()
+
+            cursor.execute("""
+                SELECT 'Other' AS label, SUM(b.unit_cost) AS value
+                FROM balance b
+                JOIN inventory i ON b.ndc_number = i.ndc_number
+                WHERE i.drug_name NOT IN (
+                    SELECT drug_name FROM (
+                        SELECT i.drug_name FROM balance b
+                        JOIN inventory i ON b.ndc_number = i.ndc_number
+                        GROUP BY i.drug_name
+                        ORDER BY SUM(b.unit_cost) DESC
+                        LIMIT 5
+                    ) AS subquery
+                )
+            """)
+            other_price = cursor.fetchone()
+            if other_price:
+                top_price_results.append(other_price)
+
+            # ✅ Top 5 Inventory by Quantity + "Other"
+            cursor.execute("""
+                SELECT i.drug_name AS label, SUM(b.balance_on_hand) AS value
+                FROM balance b
+                JOIN inventory i ON b.ndc_number = i.ndc_number
+                GROUP BY i.drug_name
+                ORDER BY value DESC
+                LIMIT 5
+            """)
+            top_quantity_results = cursor.fetchall()
+
+            cursor.execute("""
+                SELECT 'Other' AS label, SUM(b.balance_on_hand) AS value
+                FROM balance b
+                JOIN inventory i ON b.ndc_number = i.ndc_number
+                WHERE i.drug_name NOT IN (
+                    SELECT drug_name FROM (
+                        SELECT i.drug_name FROM balance b
+                        JOIN inventory i ON b.ndc_number = i.ndc_number
+                        GROUP BY i.drug_name
+                        ORDER BY SUM(b.balance_on_hand) DESC
+                        LIMIT 5
+                    ) AS subquery
+                )
+            """)
+            other_quantity = cursor.fetchone()
+            if other_quantity:
+                top_quantity_results.append(other_quantity)
+
+            # ✅ Extract labels & values for Pie Charts
+            top_price_labels = [row["label"] for row in top_price_results]
+            top_price_values = [row["value"] for row in top_price_results]
+
+            top_quantity_labels = [row["label"] for row in top_quantity_results]
+            top_quantity_values = [row["value"] for row in top_quantity_results]
+
+            # ✅ Get Current Month's Totals
+            cursor.execute("""
+                SELECT SUM(balance_on_hand) AS total_items, SUM(inventory_value) AS total_price
+                FROM balance
+            """)
+            current_month_totals = cursor.fetchone()
+            current_total_items = current_month_totals["total_items"] if current_month_totals["total_items"] else 0
+            current_total_price = current_month_totals["total_price"] if current_month_totals["total_price"] else 0
+
+            # ✅ Get Last Month's Totals
+            cursor.execute("""
+                SELECT SUM(balance_on_hand) AS total_items, SUM(inventory_value) AS total_price
+                FROM balance
+                WHERE ndc_number IN (
+                    SELECT DISTINCT ndc_number FROM inventory_transactions
+                    WHERE transaction_date BETWEEN DATE_SUB(CURDATE(), INTERVAL 2 MONTH) 
+                    AND DATE_SUB(CURDATE(), INTERVAL 1 MONTH)
+                )
+            """)
+            last_month_totals = cursor.fetchone()
+            last_month_items = last_month_totals["total_items"] if last_month_totals["total_items"] else 0
+            last_month_price = last_month_totals["total_price"] if last_month_totals["total_price"] else 0
+
+            # ✅ Fix Percentage Change Calculation (Avoid Division by Zero)
+            items_change = ((current_total_items - last_month_items) / last_month_items) * 100 if last_month_items > 0 else 0
+            price_change = ((current_total_price - last_month_price) / last_month_price) * 100 if last_month_price > 0 else 0
+
+        return render_template(
+            "dashboards.html",
+            dates=dates,
+            total_values=total_values,
+            months=months,
+            net_changes=net_changes,
+            scatter_data=scatter_data,
+            top_price_labels=top_price_labels,
+            top_price_values=top_price_values,
+            top_quantity_labels=top_quantity_labels,
+            top_quantity_values=top_quantity_values,
+            items_change=round(items_change, 2),
+            price_change=round(price_change, 2)
+        )
+
+    except Exception as e:
+        flash(f"Error retrieving dashboard data: {e}")
+        print(f"Error retrieving dashboard data: {e}")
+        return redirect(url_for('inventory'))
+    finally:
+        mydb.close()
+
+
+
 
 # Sign Off Route (Sign off and return to login screen)
 @app.route('/sign_off')

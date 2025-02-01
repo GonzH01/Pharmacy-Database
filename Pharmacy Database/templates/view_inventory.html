@@ -92,6 +92,13 @@
         .save-button:hover {
             background-color: #1E88E5;
         }
+        .summary-button {
+            background-color: #ff9800;
+            color: white;
+        }
+        .summary-button:hover {
+            background-color: #e68900;
+        }
         .button-group {
             display: flex;
             justify-content: space-between;
@@ -148,13 +155,23 @@
         </tbody>
     </table>
 
-    <!-- Save as CSV and Cancel Buttons with CSV Credentials -->
+    <!-- Save as CSV, Summary Button, and Cancel Buttons -->
     <div class="button-group">
+        <!-- Save as CSV -->
         <form method="POST" action="{{ url_for('download_inventory_csv') }}" autocomplete="off">
-            <label for="csv_credentials">4- Digit Credentials:</label>
+            <label for="csv_credentials">4-Digit Credentials:</label>
             <input type="text" id="csv_credentials" name="credentials" maxlength="4" pattern="\d{4}" required>
             <button type="submit" class="button save-button">Save as CSV</button>
         </form>
+
+        <!-- Summary Button -->
+        <form method="GET" action="{{ url_for('dashboards') }}" autocomplete="off">
+            <label for="summary_credentials">4-Digit Credentials:</label>
+            <input type="text" id="summary_credentials" name="credentials" maxlength="4" pattern="\d{4}" required>
+            <button type="submit" class="button summary-button">Summary</button>
+        </form>
+
+        <!-- Cancel Button -->
         <a href="{{ url_for('inventory') }}" class="button cancel-button">Cancel</a>
     </div>
 </body>

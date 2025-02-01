@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 10px;
+            background-color: #f4f4f4;
+            text-align: center;
+            position: relative;
+        }
+
+        h1 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 25px;
+            font-weight: bold;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: 1fr 0.6fr 1fr;
+            gap: 20px;
+            justify-items: center;
+            align-items: center;
+        }
+
+        .grid-container-bottom {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            justify-items: center;
+            align-items: center;
+            margin-top: 30px;
+        }
+
+        .chart-container {
+            width: 100%;
+            max-width: 520px;
+            height: 320px;
+            background-color: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chart-container-small {
+            width: 100%;
+            max-width: 400px;
+            height: 280px;
+            background-color: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .stats-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+            max-width: 250px;
+        }
+
+        .stats-box {
+            background-color: white;
+            padding: 18px;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            font-size: clamp(14px, 2vw, 18px);
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            text-align: center;
+            min-height: 55px;
+        }
+
+        .chart-title {
+            font-size: 92%;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .arrow-up {
+            color: green;
+            font-size: 16px;
+        }
+
+        .arrow-down {
+            color: red;
+            font-size: 16px;
+        }
+
+        /* ✅ Ensure Canvas Respects Container Size */
+        canvas {
+            max-width: 88% !important;
+            max-height: 88% !important;
+            display: block;
+            margin: auto;
+        }
+
+        /* ✅ Inventory Menu Button */
+        .inventory-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #3498db;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+            transition: background 0.3s ease;
+        }
+
+        .inventory-button:hover {
+            background-color: #2c81ba;
+        }
+
+    </style>
+</head>
+<body>
+    <h1>Inventory Dashboard</h1>
+
+    <!-- Top Charts & Statistics Boxes -->
+    <div class="grid-container">
+        <div class="chart-container">
+            <h2 class="chart-title">Total Inventory Value Over Time</h2>
+            <canvas id="inventoryValueChart"></canvas>
+        </div>
+
+        <!-- Monthly Statistics -->
+        <div class="stats-container">
+            <div class="stats-box">
+                <span>Monthly Items in Inventory:</span>
+                <span id="monthlyItemsChange">--</span>
+            </div>
+            <div class="stats-box">
+                <span>Monthly Inventory Price:</span>
+                <span id="monthlyPriceChange">--</span>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <h2 class="chart-title">Monthly Inventory Movement</h2>
+            <canvas id="inventoryMovementChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Bottom Charts -->
+    <div class="grid-container-bottom">
+        <div class="chart-container-small">
+            <h2 class="chart-title">Top 5 Priced Medications</h2>
+            <canvas id="topPriceChart"></canvas>
+        </div>
+
+        <div class="chart-container-small">
+            <h2 class="chart-title">Price vs. Inventory Value</h2>
+            <canvas id="priceValueChart"></canvas>
+        </div>
+
+        <div class="chart-container-small">
+            <h2 class="chart-title">Top 5 Inventory by Quantity</h2>
+            <canvas id="topQuantityChart"></canvas>
+        </div>
+    </div>
+
+    <!-- ✅ Inventory Menu Button -->
+    <button class="inventory-button" onclick="window.location.href='/inventory'">Inventory Menu</button>
+
+    <script>
+        const chartOptions = { 
+            responsive: true, 
+            maintainAspectRatio: true, 
+            aspectRatio: 1.5
+        };
+
+        new Chart(document.getElementById('inventoryValueChart'), {
+            type: 'line',
+            data: {
+                labels: {{ dates|tojson }},
+                datasets: [{
+                    label: 'Total Inventory Value ($)',
+                    data: {{ total_values|tojson }},
+                    borderColor: 'blue',
+                    fill: true
+                }]
+            },
+            options: chartOptions
+        });
+
+        new Chart(document.getElementById('inventoryMovementChart'), {
+            type: 'bar',
+            data: {
+                labels: {{ months|tojson }},
+                datasets: [{
+                    label: 'Net Change in Balance',
+                    data: {{ net_changes|tojson }},
+                    backgroundColor: 'green'
+                }]
+            },
+            options: { 
+                ...chartOptions,
+                indexAxis: 'y'
+            }
+        });
+
+        new Chart(document.getElementById('priceValueChart'), {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Price vs. Inventory Value',
+                    data: {{ scatter_data|tojson }},
+                    backgroundColor: 'red'
+                }]
+            },
+            options: chartOptions
+        });
+
+        new Chart(document.getElementById('topPriceChart'), {
+            type: 'doughnut',
+            data: {
+                labels: {{ top_price_labels|tojson }},
+                datasets: [{
+                    data: {{ top_price_values|tojson }},
+                    backgroundColor: ['#34495e', '#21618c', '#2e86c1', '#5dade2', '#aed6f1', '#ccd1d1'],
+                    borderWidth: 0
+                }]
+            },
+            options: { 
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '60%',
+                plugins: { legend: { position: 'top' } },
+                scales: { x: { display: false }, y: { display: false } }
+            }
+        });
+
+        new Chart(document.getElementById('topQuantityChart'), {
+            type: 'doughnut',
+            data: {
+                labels: {{ top_quantity_labels|tojson }},
+                datasets: [{
+                    data: {{ top_quantity_values|tojson }},
+                    backgroundColor: ['#34495e', '#21618c', '#2e86c1', '#5dade2', '#aed6f1', '#ccd1d1'],
+                    borderWidth: 0
+                }]
+            },
+            options: { 
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '60%',
+                plugins: { legend: { position: 'top' } },
+                scales: { x: { display: false }, y: { display: false } }
+            }
+        });
+
+        function updateStats() {
+            document.getElementById("monthlyItemsChange").innerHTML = {{ items_change }} >= 0 
+                ? `<span class="arrow-up">▲</span> {{ items_change }}%` 
+                : `<span class="arrow-down">▼</span> {{ items_change }}%`;
+
+            document.getElementById("monthlyPriceChange").innerHTML = {{ price_change }} >= 0 
+                ? `<span class="arrow-up">▲</span> {{ price_change }}%` 
+                : `<span class="arrow-down">▼</span> {{ price_change }}%`;
+        }
+
+        updateStats();
+    </script>
+</body>
+</html>
