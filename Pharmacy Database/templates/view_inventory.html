@@ -144,12 +144,12 @@
         <tbody>
             {% for med in inventory %}
             <tr>
-                <td>{{ med[0] if med[0] is not none else 'N/A' }}</td>
-                <td>{{ med[1] if med[1] is not none else 'N/A' }}</td>
-                <td>{{ med[2] if med[2] is not none else 'N/A' }}</td>
-                <td>{{ med[3] if med[3] is not none else 0 }}</td>
-                <td>${{ "%.2f"|format(med[4]) if med[4] is not none else '0.00' }}</td>
-                <td>${{ "%.2f"|format(med[5]) if med[5] is not none else '0.00' }}</td>
+                <td>{{ med.drug_name if med.drug_name else 'N/A' }}</td>
+                <td>{{ med.ndc_number if med.ndc_number else 'N/A' }}</td>
+                <td>{{ med.strength if med.strength else 'N/A' }}</td>
+                <td>{{ med.balance_on_hand if med.balance_on_hand is not none else 0 }}</td>
+                <td>${{ "%.2f"|format(med.unit_price) if med.unit_price is not none else '0.00' }}</td>
+                <td>${{ "%.2f"|format(med.inventory_value) if med.inventory_value is not none else '0.00' }}</td>
             </tr>
             {% endfor %}
         </tbody>

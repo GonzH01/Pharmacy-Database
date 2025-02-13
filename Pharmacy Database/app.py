@@ -5,8 +5,9 @@ from scripts.patient_m import (
     get_patient_profile
 )
 from scripts.inventory_m import (
-    create_tables_and_input_data, 
-    view_inventory_table, 
+    create_tables,
+    view_inventory_table,
+    add_inventory_entry, 
     update_balance_table, 
     get_drug_by_ndc, 
     check_ndc_in_inventory, 
@@ -580,31 +581,72 @@ def add_med():
             # Connect and insert data
             username = user_info['username']
             password = user_info['password']
-            result = create_tables_and_input_data(
-                ndc, drug_name, dosage_form, strength, quantity, quantity_per_unit,
-                expiration_date, lot_number, manufacturer_name, unit_price,
-                phone_number, email, fax, controlled_substance_status, username, password
-            )
+            mydb = connect_to_database(username, password)
 
-            if "Error connecting to the database" in result:
-                flash(result, 'error')
+            if not mydb:
+                flash("Error connecting to the database", 'error')
                 return redirect(url_for('add_med'))
 
-            # Log transaction: adding a new medication is a "restock" action
-            log_inventory_transaction(ndc, quantity, "restock", username, password)
+            with mydb.cursor() as cursor:
+                cursor.execute("SET SESSION innodb_lock_wait_timeout = 50")
 
-            # Update balance after inserting a new medication
-            update_balance_table(username, password)
+                # ✅ **Ensure the medication exists in inventory BEFORE adding it to inventory_entry**
+                cursor.execute("SELECT COUNT(*) FROM inventory WHERE ndc_number = %s", (ndc,))
+                inventory_exists = cursor.fetchone()[0]
 
-            flash(f"{drug_name} added successfully.", "success")
-            return redirect(url_for('inventory', success='true'))
+                if not inventory_exists:
+                    cursor.execute("""
+                        INSERT INTO inventory (drug_name, ndc_number, strength, balance_on_hand, 
+                                               inventory_value, unit_price)
+                        VALUES (%s, %s, %s, 0, 0.00, %s)
+                    """, (drug_name, ndc, strength, unit_price))
+                    print(f"✅ {drug_name} added to inventory successfully!")
+
+                # ✅ **Now insert into inventory_entry**
+                cursor.execute("""
+                    INSERT INTO inventory_entry (drug_name, ndc_number, manufacturer_name, strength, 
+                                                 quantity, quantity_per_unit, expiration_date, 
+                                                 lot_number, unit_price, phone_number, email, fax, 
+                                                 controlled_substance_status)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, (drug_name, ndc, manufacturer_name, strength, quantity, quantity_per_unit, 
+                      expiration_date, lot_number, unit_price, phone_number, email, fax, 
+                      controlled_substance_status))
+                print(f"✅ {drug_name} entry added to inventory_entry.")
+
+                # ✅ **Log inventory transaction**
+                cursor.execute("""
+                    INSERT INTO inventory_transactions (ndc_number, transaction_date, change_in_balance, transaction_type)
+                    VALUES (%s, NOW(), %s, 'restock')
+                """, (ndc, quantity * quantity_per_unit))
+                print(f"✅ Inventory transaction logged for {drug_name}.")
+
+                # ✅ **Update balance table**
+                cursor.execute("""
+                    INSERT INTO balance (ndc_number, balance_on_hand, inventory_value, unit_cost)
+                    VALUES (%s, %s, %s, %s)
+                    ON DUPLICATE KEY UPDATE
+                        balance_on_hand = balance_on_hand + VALUES(balance_on_hand),
+                        inventory_value = inventory_value + VALUES(inventory_value)
+                """, (ndc, quantity * quantity_per_unit, unit_price * (quantity * quantity_per_unit), unit_price))
+
+                print(f"✅ Balance table updated successfully!")
+
+                mydb.commit()
+                flash(f"{drug_name} added successfully.", "success")
+                return redirect(url_for('inventory', success='true'))
 
         except Exception as e:
             flash(f"An error occurred: {e}", "error")
-            print(f"Error adding medication: {e}")
+            print(f"❌ Error adding medication: {e}")
             return redirect(url_for('add_med'))
 
+        finally:
+            if mydb:
+                mydb.close()
+
     return render_template('add_med.html')
+
 
 
 
@@ -639,11 +681,11 @@ def inventory():
 
 @app.route('/view_inventory', methods=['GET', 'POST'])
 def view_inventory():
-    # Get credentials based on the request method
+    # Get credentials from request method
     credentials = request.form.get('credentials') if request.method == 'POST' else request.args.get('credentials')
     
     # Set sorting parameters with default values
-    sort_by = request.args.get('sort_by', 'boh')
+    sort_by = request.args.get('sort_by', 'inventory_value')
     sort_order = request.args.get('sort_order', 'desc')
 
     # Verify credentials before accessing the database
@@ -652,21 +694,22 @@ def view_inventory():
         flash("Invalid or expired credentials. Please log in again.")
         return redirect(url_for('inventory'))
 
-    # Auto-update balance table before viewing inventory
-    update_balance_table(user_info['username'], user_info['password'])
+    username = user_info['username']
+    password = user_info['password']
 
-    # Fetch inventory data with sorting
-    inventory_data, total_inventory_value, inventory_items_count = view_inventory_table(
-        user_info['username'], user_info['password'], sort_by, sort_order
-    )
+    # ✅ Auto-update balance table before viewing inventory
+    update_balance_table(username, password)
+
+    # ✅ Fetch inventory data with sorting (ensuring unique NDCs)
+    inventory_data, total_inventory_value, inventory_items_count = view_inventory_table(username, password, sort_by, sort_order)
 
     # Debugging output to confirm data retrieval
     if not inventory_data:
-        print("No inventory data retrieved or issue with query.")
+        print("❌ No inventory data retrieved or issue with query.")
     else:
-        print(f"Inventory Data Retrieved: {len(inventory_data)} items")
+        print(f"✅ Inventory Data Retrieved: {len(inventory_data)} items")
 
-    # Render the template with inventory data and totals
+    # ✅ Render the template with unique inventory data
     return render_template(
         'view_inventory.html',
         inventory=inventory_data,
@@ -760,102 +803,137 @@ def dashboards():
             # ✅ Monthly Inventory Movement
             cursor.execute("""
                 SELECT DATE_FORMAT(t.transaction_date, '%Y-%m') AS month, 
-                       SUM(t.change_in_balance) AS net_change
+                    SUM(CASE WHEN t.change_in_balance > 0 THEN t.change_in_balance ELSE 0 END) AS total_items,
+                    SUM(t.change_in_balance * COALESCE(i.unit_price, 0.00)) AS total_price
                 FROM inventory_transactions t
+                LEFT JOIN inventory i ON t.ndc_number = i.ndc_number
+                WHERE t.transaction_date IS NOT NULL
                 GROUP BY month
                 ORDER BY month ASC
             """)
             movement_results = cursor.fetchall()
-            months = [row["month"] for row in movement_results]
-            net_changes = [row["net_change"] for row in movement_results]
 
-            # ✅ Price vs. Inventory Value Scatter Data
+            months = [row["month"] for row in movement_results]
+            net_changes = [row["total_items"] for row in movement_results]
+            monthly_inventory_prices = [float(row["total_price"]) for row in movement_results]
+
+            # ✅ Retrieve Price vs. Inventory Value Scatter Data with Strength
             cursor.execute("""
-                SELECT b.unit_cost, b.inventory_value
-                FROM balance b
-                WHERE b.inventory_value > 0
+                SELECT i.drug_name, i.strength, 
+                    COALESCE(i.unit_price, 0.00) AS unit_price, 
+                    COALESCE(i.inventory_value, 0.00) AS inventory_value, 
+                    COALESCE(i.balance_on_hand, 0) AS balance_on_hand
+                FROM inventory i
+                WHERE i.inventory_value > 0
             """)
             scatter_results = cursor.fetchall()
-            scatter_data = [{"x": row["unit_cost"], "y": row["inventory_value"]} for row in scatter_results]
 
-            # ✅ Top 5 Priced Medications + "Other"
+            scatter_data = [
+                {
+                    "x": float(row["unit_price"]), 
+                    "y": float(row["inventory_value"]), 
+                    "drug_name": row["drug_name"], 
+                    "strength": row["strength"], 
+                    "unit_price": float(row["unit_price"]), 
+                    "balance_on_hand": row["balance_on_hand"]
+                }
+                for row in scatter_results
+            ]
+
+
+
+            # ✅ Top 5 Inventory Valued Medications + "Other"
             cursor.execute("""
-                SELECT i.drug_name AS label, SUM(b.unit_cost) AS value
-                FROM balance b
-                JOIN inventory i ON b.ndc_number = i.ndc_number
-                GROUP BY i.drug_name
+                SELECT i.drug_name, i.strength, SUM(i.inventory_value) AS value
+                FROM inventory i
+                GROUP BY i.drug_name, i.strength
                 ORDER BY value DESC
                 LIMIT 5
             """)
-            top_price_results = cursor.fetchall()
+            top_inventory_value_results = cursor.fetchall()
 
+            # ✅ Extract values into lists
+            top_inventory_value_labels = [row["drug_name"] for row in top_inventory_value_results]
+            top_inventory_value_values = [float(row["value"]) for row in top_inventory_value_results]
+            top_inventory_value_strengths = [row["strength"] for row in top_inventory_value_results]
+
+            # ✅ Calculate "Other" category
             cursor.execute("""
-                SELECT 'Other' AS label, SUM(b.unit_cost) AS value
-                FROM balance b
-                JOIN inventory i ON b.ndc_number = i.ndc_number
+                SELECT 'Other' AS drug_name, NULL AS strength, SUM(i.inventory_value) AS value
+                FROM inventory i
                 WHERE i.drug_name NOT IN (
                     SELECT drug_name FROM (
-                        SELECT i.drug_name FROM balance b
-                        JOIN inventory i ON b.ndc_number = i.ndc_number
+                        SELECT i.drug_name FROM inventory i
                         GROUP BY i.drug_name
-                        ORDER BY SUM(b.unit_cost) DESC
+                        ORDER BY SUM(i.inventory_value) DESC
                         LIMIT 5
                     ) AS subquery
                 )
             """)
-            other_price = cursor.fetchone()
-            if other_price:
-                top_price_results.append(other_price)
+            other_inventory_value = cursor.fetchone()
+            if other_inventory_value:
+                top_inventory_value_labels.append(other_inventory_value["drug_name"])
+                top_inventory_value_values.append(other_inventory_value["value"])
+                top_inventory_value_strengths.append("")  # ✅ Use empty string for "Other"
 
-            # ✅ Top 5 Inventory by Quantity + "Other"
+
+
+            
+            # ✅ Initialize lists to avoid undefined variables
+            top_quantity_labels = []
+            top_quantity_values = []
+            top_quantity_strengths = []
+
+            # ✅ Fetch Top 5 Inventory by Quantity
             cursor.execute("""
-                SELECT i.drug_name AS label, SUM(b.balance_on_hand) AS value
-                FROM balance b
-                JOIN inventory i ON b.ndc_number = i.ndc_number
-                GROUP BY i.drug_name
+                SELECT i.drug_name, i.strength, SUM(i.balance_on_hand) AS value
+                FROM inventory i
+                WHERE i.balance_on_hand > 0
+                GROUP BY i.drug_name, i.strength
                 ORDER BY value DESC
                 LIMIT 5
             """)
             top_quantity_results = cursor.fetchall()
+            
+            # ✅ Assign values to lists, ensuring no NULLs in strength
+            top_quantity_labels = [row["drug_name"] for row in top_quantity_results]
+            top_quantity_values = [float(row["value"]) for row in top_quantity_results]
+            top_quantity_strengths = [row["strength"] if row["strength"] is not None else "N/A" for row in top_quantity_results]
 
+            # ✅ Handle "Other" category separately
             cursor.execute("""
-                SELECT 'Other' AS label, SUM(b.balance_on_hand) AS value
-                FROM balance b
-                JOIN inventory i ON b.ndc_number = i.ndc_number
+                SELECT 'Other' AS drug_name, NULL AS strength, SUM(i.balance_on_hand) AS value
+                FROM inventory i
                 WHERE i.drug_name NOT IN (
                     SELECT drug_name FROM (
-                        SELECT i.drug_name FROM balance b
-                        JOIN inventory i ON b.ndc_number = i.ndc_number
+                        SELECT i.drug_name FROM inventory i
                         GROUP BY i.drug_name
-                        ORDER BY SUM(b.balance_on_hand) DESC
+                        ORDER BY SUM(i.balance_on_hand) DESC
                         LIMIT 5
                     ) AS subquery
                 )
             """)
             other_quantity = cursor.fetchone()
-            if other_quantity:
-                top_quantity_results.append(other_quantity)
 
-            # ✅ Extract labels & values for Pie Charts
-            top_price_labels = [row["label"] for row in top_price_results]
-            top_price_values = [row["value"] for row in top_price_results]
+            if other_quantity and other_quantity["value"] > 0:
+                top_quantity_labels.append(other_quantity["drug_name"])
+                top_quantity_values.append(float(other_quantity["value"]))  # ✅ Convert Decimal to float
+                top_quantity_strengths.append("")  # ✅ Empty string for "Other"
 
-            top_quantity_labels = [row["label"] for row in top_quantity_results]
-            top_quantity_values = [row["value"] for row in top_quantity_results]
-
+                       
             # ✅ Get Current Month's Totals
             cursor.execute("""
                 SELECT SUM(balance_on_hand) AS total_items, SUM(inventory_value) AS total_price
-                FROM balance
+                FROM inventory
             """)
             current_month_totals = cursor.fetchone()
-            current_total_items = current_month_totals["total_items"] if current_month_totals["total_items"] else 0
-            current_total_price = current_month_totals["total_price"] if current_month_totals["total_price"] else 0
+            current_total_items = float(current_month_totals["total_items"]) if current_month_totals["total_items"] else 0
+            current_total_price = float(current_month_totals["total_price"]) if current_month_totals["total_price"] else 0
 
             # ✅ Get Last Month's Totals
             cursor.execute("""
                 SELECT SUM(balance_on_hand) AS total_items, SUM(inventory_value) AS total_price
-                FROM balance
+                FROM inventory
                 WHERE ndc_number IN (
                     SELECT DISTINCT ndc_number FROM inventory_transactions
                     WHERE transaction_date BETWEEN DATE_SUB(CURDATE(), INTERVAL 2 MONTH) 
@@ -863,34 +941,50 @@ def dashboards():
                 )
             """)
             last_month_totals = cursor.fetchone()
-            last_month_items = last_month_totals["total_items"] if last_month_totals["total_items"] else 0
-            last_month_price = last_month_totals["total_price"] if last_month_totals["total_price"] else 0
+            last_month_items = float(last_month_totals["total_items"]) if last_month_totals["total_items"] else 0
+            last_month_price = float(last_month_totals["total_price"]) if last_month_totals["total_price"] else 0
 
             # ✅ Fix Percentage Change Calculation (Avoid Division by Zero)
             items_change = ((current_total_items - last_month_items) / last_month_items) * 100 if last_month_items > 0 else 0
             price_change = ((current_total_price - last_month_price) / last_month_price) * 100 if last_month_price > 0 else 0
 
-        return render_template(
-            "dashboards.html",
-            dates=dates,
-            total_values=total_values,
-            months=months,
-            net_changes=net_changes,
-            scatter_data=scatter_data,
-            top_price_labels=top_price_labels,
-            top_price_values=top_price_values,
-            top_quantity_labels=top_quantity_labels,
-            top_quantity_values=top_quantity_values,
-            items_change=round(items_change, 2),
-            price_change=round(price_change, 2)
-        )
+            # ✅ Ensure no undefined variables are passed
+            scatter_data = scatter_data if 'scatter_data' in locals() else []
+            months = months if 'months' in locals() else []
+            net_changes = [int(row["total_items"]) for row in movement_results]
+            dates = dates if 'dates' in locals() else []
+            total_values = [float(row["total_inventory_value"]) for row in results]
+
+
+
+            return render_template(
+                "dashboards.html",
+                dates=dates,
+                total_values=total_values,
+                months=months,
+                net_changes=net_changes,
+                monthly_inventory_prices=monthly_inventory_prices,
+                scatter_data=scatter_data,
+                top_inventory_value_labels=top_inventory_value_labels,  # ✅ Updated
+                top_inventory_value_values=top_inventory_value_values,  # ✅ Updated
+                top_inventory_value_strengths=top_inventory_value_strengths,  # ✅ Updated
+                top_quantity_labels=top_quantity_labels,
+                top_quantity_values=top_quantity_values,
+                top_quantity_strengths=top_quantity_strengths,
+                items_change=round(items_change, 2),
+                price_change=round(price_change, 2)
+)
+
+
 
     except Exception as e:
         flash(f"Error retrieving dashboard data: {e}")
-        print(f"Error retrieving dashboard data: {e}")
+        print(f"❌ Error retrieving dashboard data:", e)
         return redirect(url_for('inventory'))
+
     finally:
         mydb.close()
+
 
 
 

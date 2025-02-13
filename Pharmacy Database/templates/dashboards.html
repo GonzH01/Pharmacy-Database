@@ -167,8 +167,8 @@
     <!-- Bottom Charts -->
     <div class="grid-container-bottom">
         <div class="chart-container-small">
-            <h2 class="chart-title">Top 5 Priced Medications</h2>
-            <canvas id="topPriceChart"></canvas>
+            <h2 class="chart-title">Top 5 Inventory Valued Medications</h2>
+            <canvas id="topInventoryValueChart"></canvas>
         </div>
 
         <div class="chart-container-small">
@@ -203,43 +203,90 @@
                     fill: true
                 }]
             },
-            options: chartOptions
-        });
-
-        new Chart(document.getElementById('inventoryMovementChart'), {
-            type: 'bar',
-            data: {
-                labels: {{ months|tojson }},
-                datasets: [{
-                    label: 'Net Change in Balance',
-                    data: {{ net_changes|tojson }},
-                    backgroundColor: 'green'
-                }]
-            },
-            options: { 
-                ...chartOptions,
-                indexAxis: 'y'
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: false } // ✅ Remove legend
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: "Date" // ✅ X-Axis Label
+                        },
+                        ticks: {
+                            autoSkip: true, // ✅ Automatically skips labels if they overlap
+                            maxRotation: 45, // ✅ Rotates the text to prevent overlapping (0 is horizontal)
+                            minRotation: 30, // ✅ Ensures slight tilt for better readability
+                            font: {
+                                size: 10 // ✅ Reduces font size to fit better
+                            }
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: "Total Inventory Value ($)" // ✅ Y-Axis Label
+                        }
+                    }
+                }
             }
         });
+        
+        
 
         new Chart(document.getElementById('priceValueChart'), {
             type: 'scatter',
             data: {
                 datasets: [{
-                    label: 'Price vs. Inventory Value',
-                    data: {{ scatter_data|tojson }},
-                    backgroundColor: 'red'
+                    label: 'Inventory Value vs. Unit Price',
+                    data: {{ scatter_data|tojson or [] }},
+                    backgroundColor: 'red',
+                    pointRadius: 5
                 }]
             },
-            options: chartOptions
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(tooltipItem) {
+                                let dataPoint = tooltipItem.raw;  // Get the hovered data point
+                                return `${dataPoint.drug_name} | ${dataPoint.strength} | $${dataPoint.y.toFixed(2)} | $${dataPoint.x.toFixed(2)}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: "Unit Price ($)"
+                        },
+                        beginAtZero: true
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: "Inventory Value ($)"
+                        },
+                        beginAtZero: true
+                    }
+                }
+            }
         });
+        
+        
 
-        new Chart(document.getElementById('topPriceChart'), {
+        new Chart(document.getElementById('topInventoryValueChart'), {
             type: 'doughnut',
             data: {
-                labels: {{ top_price_labels|tojson }},
+                labels: {{ top_inventory_value_labels|tojson }},
                 datasets: [{
-                    data: {{ top_price_values|tojson }},
+                    data: {{ top_inventory_value_values|tojson or [] }},
                     backgroundColor: ['#34495e', '#21618c', '#2e86c1', '#5dade2', '#aed6f1', '#ccd1d1'],
                     borderWidth: 0
                 }]
@@ -248,17 +295,40 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 cutout: '60%',
-                plugins: { legend: { position: 'top' } },
+                plugins: { 
+                    legend: { 
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true, 
+                            pointStyle: 'rectRounded',
+                            generateLabels: function(chart) {
+                                let labels = JSON.parse('{{ top_inventory_value_labels | tojson }}');
+                                let strengths = JSON.parse('{{ top_inventory_value_strengths | tojson }}'); 
+    
+                                return labels.map((label, i) => ({
+                                    text: label !== "Other" ? `${label} (${strengths[i]})` : "Other",
+                                    fillStyle: chart.data.datasets[0].backgroundColor[i],
+                                    hidden: chart.getDatasetMeta(0).data[i].hidden,
+                                    index: i
+                                }));
+                            }
+                        }
+                    }
+                },
                 scales: { x: { display: false }, y: { display: false } }
             }
         });
+        
+        
+        
 
+        
         new Chart(document.getElementById('topQuantityChart'), {
             type: 'doughnut',
             data: {
                 labels: {{ top_quantity_labels|tojson }},
                 datasets: [{
-                    data: {{ top_quantity_values|tojson }},
+                    data: {{ top_quantity_values|tojson or [] }},
                     backgroundColor: ['#34495e', '#21618c', '#2e86c1', '#5dade2', '#aed6f1', '#ccd1d1'],
                     borderWidth: 0
                 }]
@@ -267,22 +337,94 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 cutout: '60%',
-                plugins: { legend: { position: 'top' } },
+                plugins: { 
+                    legend: { 
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true, 
+                            pointStyle: 'rectRounded',
+                            generateLabels: function(chart) {
+                                let labels = JSON.parse('{{ top_quantity_labels | tojson }}');
+                                let strengths = JSON.parse('{{ top_quantity_strengths | tojson }}'); 
+        
+                                return labels.map((label, i) => ({
+                                    text: label !== "Other" ? `${label} (${strengths[i]})` : "Other",
+                                    fillStyle: chart.data.datasets[0].backgroundColor[i],
+                                    hidden: chart.getDatasetMeta(0).data[i].hidden,
+                                    index: i
+                                }));
+                            }
+                        }
+                    }
+                },
                 scales: { x: { display: false }, y: { display: false } }
             }
         });
+        
+        
+        new Chart(document.getElementById('inventoryMovementChart'), {
+            type: 'bar',
+            data: {
+                labels: {{ months|tojson or [] }},  // X-Axis Labels (Months)
+                datasets: [{
+                    label: 'Net Change in Balance',
+                    data: {{ net_changes|tojson or [] }},  // Y-Axis Data (Change in Balance)
+                    backgroundColor: 'green'
+                }]
+            },
+            options: { 
+                responsive: true,
+                maintainAspectRatio: true,
+                indexAxis: 'y',  // ✅ Horizontal Bar Chart
+                plugins: {
+                    legend: { display: false },  // ✅ Hide Legend
+                    tooltip: {
+                        callbacks: {
+                            label: function(tooltipItem) {
+                                return `Net Change: ${tooltipItem.raw}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: "Net Change in Balance"  // ✅ X-Axis Label
+                        },
+                        ticks: {
+                            beginAtZero: true
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: "Month"  // ✅ Y-Axis Label
+                        }
+                    }
+                }
+            }
+        });
+        
+        
 
         function updateStats() {
-            document.getElementById("monthlyItemsChange").innerHTML = {{ items_change }} >= 0 
-                ? `<span class="arrow-up">▲</span> {{ items_change }}%` 
-                : `<span class="arrow-down">▼</span> {{ items_change }}%`;
-
-            document.getElementById("monthlyPriceChange").innerHTML = {{ price_change }} >= 0 
-                ? `<span class="arrow-up">▲</span> {{ price_change }}%` 
-                : `<span class="arrow-down">▼</span> {{ price_change }}%`;
+            let itemsChange = {{ items_change|default(0) }};
+            let priceChange = {{ price_change|default(0) }};
+        
+            document.getElementById("monthlyItemsChange").innerHTML = 
+                itemsChange >= 0 
+                ? `<span class="arrow-up">▲</span> ${itemsChange.toFixed(2)}%` 
+                : `<span class="arrow-down">▼</span> ${itemsChange.toFixed(2)}%`;
+        
+            document.getElementById("monthlyPriceChange").innerHTML = 
+                priceChange >= 0 
+                ? `<span class="arrow-up">▲</span> ${priceChange.toFixed(2)}%` 
+                : `<span class="arrow-down">▼</span> ${priceChange.toFixed(2)}%`;
         }
-
+        
         updateStats();
+        
     </script>
 </body>
 </html>
