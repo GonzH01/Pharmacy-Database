@@ -6,8 +6,6 @@ SQLAlchemy
 pandas
 numpy
 matplotlib
-seaborn
-chart.js
 gunicorn
 requests
 python-dotenv
