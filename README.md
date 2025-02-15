@@ -74,6 +74,25 @@ These enhancements enable a **data-driven approach** to inventory tracking, allo
 
 ## **Getting Started**
 
+###**Requirements**
+Flask
+mysql-connector-python
+pymysql
+flask-mysqldb
+SQLAlchemy
+pandas
+numpy
+matplotlib
+chart.js
+gunicorn
+requests
+python-dotenv
+scipy
+flask-wtf
+flask-login
+flask-bcrypt
+
+
 ### **Installation**
 1. Clone the repository.
 2. Set up a virtual environment.
