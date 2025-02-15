@@ -1,0 +1,17 @@
+Flask
+mysql-connector-python
+pymysql
+flask-mysqldb
+SQLAlchemy
+pandas
+numpy
+matplotlib
+seaborn
+chart.js
+gunicorn
+requests
+python-dotenv
+scipy
+flask-wtf
+flask-login
+flask-bcrypt
