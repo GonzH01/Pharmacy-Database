@@ -74,7 +74,7 @@ These enhancements enable a **data-driven approach** to inventory tracking, allo
 
 ## **Getting Started**
 
-###**Requirements**
+##**Requirements**
 Flask
 mysql-connector-python
 pymysql
