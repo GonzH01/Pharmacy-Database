@@ -77,7 +77,7 @@ These enhancements enable a **data-driven approach** to inventory tracking, allo
 ### **Installation**
 1. Clone the repository.
 2. Set up a virtual environment.
-3. Install dependencies.
+3. pip install -r requirements.txt
 4. Configure the `connect_to_database.py` file with your MySQL database credentials as admin.
 
 ### **Running the Application**
