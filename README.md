@@ -44,6 +44,10 @@ https://github.com/user-attachments/assets/be7bddd0-1d69-4bc3-b446-d8234fa729e6
 - **Inventory**
     - **Edit Button** and **Delete Function** for medications on the inventory list.
 
+- **Doctor**
+    - Management similar to patients, with added fields: license number (DEA + NPI), expiration date, fax, license title.
+    - Licenses will dictate the doctor’s ability to fill certain prescriptions (controls/non-controls).
+ 
 ----------------------------------------------------------------------------------
 ***Updates:*** 
 
@@ -60,11 +64,6 @@ The **Inventory Management Dashboard** has been introduced to provide a **visual
 These enhancements enable a **data-driven approach** to inventory tracking, allowing better stock management, forecasting, and decision-making.
 
 ----------------------------------------------------------------------------------
-
-
-- **Doctor**
-    - Management similar to patients, with added fields: license number (DEA + NPI), expiration date, fax, license title.
-    - Licenses will dictate the doctor’s ability to fill certain prescriptions (controls/non-controls).
 
 ## **Tech Stack**
 - **Backend**: Python (Flask), SQL
