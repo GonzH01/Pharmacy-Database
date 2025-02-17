@@ -63,6 +63,10 @@ The **Inventory Management Dashboard** has been introduced to provide a **visual
 
 These enhancements enable a **data-driven approach** to inventory tracking, allowing better stock management, forecasting, and decision-making.
 
+
+https://github.com/user-attachments/assets/9edc2635-8113-48e1-914e-3c9c26cae242
+
+
 ----------------------------------------------------------------------------------
 
 ## **Tech Stack**
