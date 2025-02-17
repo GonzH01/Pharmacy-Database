@@ -77,11 +77,12 @@ These enhancements enable a **data-driven approach** to inventory tracking, allo
 1. Clone the repository.
 2. Set up a virtual environment.
 3. pip install -r requirements.txt
-4. Configure the `connect_to_database.py` file with your MySQL database credentials as admin.
+4. Configure the `connect_to_database.py` file with your MySQL database.
 
 ### **Running the Application**
 1. Start the Flask server.
-2. Open your web browser and navigate to the provided local server URL.
+2. Login as admin and run a new or current MySQL database.
+3. Open your web browser and navigate to the provided local server URL.
 
 ## **Usage**
 
